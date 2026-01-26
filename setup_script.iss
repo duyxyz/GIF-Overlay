@@ -1,16 +1,23 @@
+#define MyAppName "GIF Overlay"
+#define MyAppVersion "1.0.7"
+#define MyAppPublisher "DuyXYZ"
+#define MyAppURL "https://github.com/duyxyz/GIF-Overlay"
+#define MyAppExeName "GIF Overlay.exe"
+
 [Setup]
 ; Basic setup details
-AppName=GIF Overlay
-AppVersion=1.0.7
-AppPublisher=DuyXYZ
-AppPublisherURL=https://github.com/duyxyz/GIF-Overlay
-AppExeName=GIF Overlay.exe
+AppName={#MyAppName}
+AppVersion={#MyAppVersion}
+AppPublisher={#MyAppPublisher}
+AppPublisherURL={#MyAppURL}
+; AppExeName is NOT a valid directive, so we remove it. 
+; The Executable name is used in [Icons] and [Run] via the define above.
 
 ; Make the setup look modern
 WizardStyle=modern
-DefaultDirName={autopf}\GIF Overlay
-DefaultGroupName=GIF Overlay
-UninstallDisplayIcon={app}\GIF Overlay.exe
+DefaultDirName={autopf}\{#MyAppName}
+DefaultGroupName={#MyAppName}
+UninstallDisplayIcon={app}\{#MyAppExeName}
 Compression=lzma2/ultra
 SolidCompression=yes
 OutputDir=dist
@@ -31,8 +38,8 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Source: "dist\GIF-Overlay\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{group}\GIF Overlay"; Filename: "{app}\GIF Overlay.exe"
-Name: "{autodesktop}\GIF Overlay"; Filename: "{app}\GIF Overlay.exe"; Tasks: desktopicon
+Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\GIF Overlay.exe"; Description: "{cm:LaunchProgram,GIF Overlay}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall skipifsilent

@@ -496,23 +496,8 @@ class GifOnTop(QWidget):
     def mouseMoveEvent(self, event):
         if not self.is_locked and event.buttons() & Qt.LeftButton and self.drag_position:
             self.move(event.globalPos() - self.drag_position)
-            self.save_settings(self.width(), self.height(), self.windowOpacity())
             event.accept()
 
-    def wheelEvent(self, event):
-        """Allow scaling with mouse wheel when not locked"""
-        if self.is_locked: return
-        
-        delta = event.angleDelta().y()
-        scale_factor = 1.1 if delta > 0 else 0.9
-        
-        new_w = int(self.width() * scale_factor)
-        new_h = int(self.height() * scale_factor)
-        
-        # Constraints
-        if 50 <= new_w <= 2000 and 50 <= new_h <= 2000:
-            self.resize(new_w, new_h)
-            self.save_settings(new_w, new_h, self.windowOpacity())
 
 if __name__ == "__main__":
     # High DPI support

@@ -246,13 +246,17 @@ class SavedGifDialog(QDialog):
         if not self.selected_path:
             return
         
-        reply = QMessageBox.question(
-            self,
-            "Delete GIF",
-            f"Are you sure you want to delete this GIF?\n\n{Path(self.selected_path).name}",
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No
-        )
+        msg = QMessageBox(self)
+        msg.setWindowFlags(msg.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+        msg.setWindowTitle("Delete Media")
+        msg.setText(f"Are you sure you want to delete this media?\n\n{Path(self.selected_path).name}")
+        msg.setIcon(QMessageBox.Question)
+        msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        msg.setDefaultButton(QMessageBox.No)
+        if self.main_window:
+            self.main_window.apply_dark_title_bar(msg)
+        
+        reply = msg.exec_()
         
         if reply == QMessageBox.Yes:
             try:
@@ -349,10 +353,8 @@ class ResizeOpacityDialog(QDialog):
         self.slider_scale.valueChanged.connect(self.update_scale)
         self.slider_o.valueChanged.connect(self.update_opacity)
 
-        self.slider_w.sliderReleased.connect(self.on_released)
-        self.slider_h.sliderReleased.connect(self.on_released)
-        self.slider_scale.sliderReleased.connect(self.on_released)
-        self.slider_o.sliderReleased.connect(self.on_released)
+        self.slider_scale.valueChanged.connect(self.update_scale)
+        self.slider_o.valueChanged.connect(self.update_opacity)
         
         self.cb_lock.stateChanged.connect(self.update_lock_state)
 
@@ -372,8 +374,11 @@ class ResizeOpacityDialog(QDialog):
         layout.addSpacing(10)
         layout.addLayout(btn_layout)
 
-    def on_released(self):
-        self.p.save_settings(self.p.width(), self.p.height(), self.p.windowOpacity())
+    def accept(self):
+        """Save settings only on Done"""
+        if self.p:
+            self.p.save_settings(self.p.width(), self.p.height(), self.p.windowOpacity())
+        super().accept()
 
     def update_width(self, value):
         if self.updating: return
