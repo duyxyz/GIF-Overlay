@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import (
     QVBoxLayout, QMenu, QMessageBox, QInputDialog,
     QSystemTrayIcon, QAction
 )
-from PyQt5.QtGui import QMovie, QIcon, QPalette, QColor, QPixmap
+from PyQt5.QtGui import QMovie, QIcon, QPalette, QColor, QPixmap, QImageReader
 from PyQt5.QtCore import Qt, QSize, QTimer
 import ctypes
 
@@ -35,6 +35,7 @@ class GifOnTop(QWidget):
         self.gif_label.setAttribute(Qt.WA_TranslucentBackground)
         self.gif_label.setAlignment(Qt.AlignCenter)
         self.gif_label.setStyleSheet("background: transparent;")
+        self.gif_label.setMinimumSize(1, 1) # CRITICAL: Allows the window to shrink
         self.layout.addWidget(self.gif_label)
 
         self.movie: Optional[QMovie] = None
@@ -46,6 +47,7 @@ class GifOnTop(QWidget):
         self.is_locked = False
         self.is_minimized_to_tray = False
         self.lock_aspect_ratio = True
+        self.original_size_cache = {} # Cache for media sizes
 
         self.setup_tray_icon()
         self.load_initial_gif()
@@ -167,10 +169,9 @@ class GifOnTop(QWidget):
 
     def save_settings(self, width: int, height: int, opacity: float):
         try:
-            x, y = self.x(), self.y()
-            # Save lock status instead of click_through
+            # We no longer save X, Y position to avoid 'buggy' placement
             lock_status = 1 if self.is_locked else 0
-            settings_str = f"{width}\n{height}\n{opacity}\n{x}\n{y}\n{lock_status}\n"
+            settings_str = f"{width}\n{height}\n{opacity}\n0\n0\n{lock_status}\n"
             with open(CONFIG_SETTINGS_FILE, "w", encoding="utf-8") as f:
                 f.write(settings_str)
             if self.current_gif_path:
@@ -200,10 +201,8 @@ class GifOnTop(QWidget):
             try:
                 w, h = int(settings_data[0]), int(settings_data[1])
                 o = float(settings_data[2])
-                x = int(settings_data[3]) if len(settings_data) >= 4 else None
-                y = int(settings_data[4]) if len(settings_data) >= 5 else None
                 ct = (int(settings_data[5]) == 1) if len(settings_data) >= 6 else False
-                return w, h, o, x, y, ct
+                return w, h, o, None, None, ct
             except: pass
         return None
     
@@ -220,25 +219,41 @@ class GifOnTop(QWidget):
             self.movie.stop()
             self.movie = None
         self.gif_label.clear()
-        self.current_pixmap = None
-
         try:
-            # Try to load as a GIF/Animation first
+            # 1. Absolute original size detection using QImageReader
+            reader = QImageReader(path)
+            detected_size = QSize(0, 0)
+            if reader.canRead():
+                detected_size = reader.size()
+            
+            # 2. Try QMovie frameRect if reader fails
+            if not detected_size.isValid() or detected_size.width() <= 0:
+                temp_test_movie = QMovie(path)
+                if temp_test_movie.isValid():
+                    temp_test_movie.jumpToFrame(0)
+                    detected_size = temp_test_movie.frameRect().size()
+
+            # 3. Final default or cache
+            if not detected_size.isValid() or detected_size.width() <= 0:
+                detected_size = self.original_size_cache.get(path, QSize(400, 400))
+            
+            self.original_size = detected_size
+            self.original_size_cache[path] = detected_size
+
+            # Load the actual media
             temp_movie = QMovie(path)
             if temp_movie.isValid():
                 self.movie = temp_movie
                 self.gif_label.setMovie(self.movie)
+                self.movie.setScaledSize(self.size()) # Initial sync
                 self.movie.start()
                 self.movie.jumpToFrame(0)
-                self.original_size = self.movie.currentPixmap().size()
             else:
-                # Try to load as a static image
                 self.current_pixmap = QPixmap(path)
                 if self.current_pixmap.isNull():
                     QMessageBox.warning(self, "Error", "Unsupported file format.")
                     return
                 self.gif_label.setPixmap(self.current_pixmap)
-                self.original_size = self.current_pixmap.size()
 
             if reset_default:
                 self.resize(self.original_size if self.original_size else QSize(300, 300))
@@ -246,9 +261,8 @@ class GifOnTop(QWidget):
             else:
                 s = self.load_settings()
                 if s:
-                    w, h, o, x, y, ct = s
+                    w, h, o, _, _, ct = s
                     self.resize(w, h)
-                    if x is not None: self.move(x, y)
                     if self.movie:
                         self.movie.setScaledSize(QSize(w, h))
                     elif self.current_pixmap:
@@ -364,9 +378,14 @@ class GifOnTop(QWidget):
         act_quit.setIcon(self.load_icon("quit.png") or QIcon())
         act_quit.triggered.connect(QApplication.quit)
         
-        act_min = close_menu.addAction("Minimize to Tray")
-        act_min.setIcon(self.load_icon("minimize.png") or QIcon())
-        act_min.triggered.connect(self.minimize_to_tray)
+        if self.is_minimized_to_tray:
+            act_restore = close_menu.addAction("Restore to Taskbar")
+            act_restore.setIcon(self.load_icon("restore.png") or QIcon())
+            act_restore.triggered.connect(self.show_normal)
+        else:
+            act_min = close_menu.addAction("Minimize to Tray")
+            act_min.setIcon(self.load_icon("minimize.png") or QIcon())
+            act_min.triggered.connect(self.minimize_to_tray)
 
         return menu
 
@@ -479,6 +498,21 @@ class GifOnTop(QWidget):
             self.move(event.globalPos() - self.drag_position)
             self.save_settings(self.width(), self.height(), self.windowOpacity())
             event.accept()
+
+    def wheelEvent(self, event):
+        """Allow scaling with mouse wheel when not locked"""
+        if self.is_locked: return
+        
+        delta = event.angleDelta().y()
+        scale_factor = 1.1 if delta > 0 else 0.9
+        
+        new_w = int(self.width() * scale_factor)
+        new_h = int(self.height() * scale_factor)
+        
+        # Constraints
+        if 50 <= new_w <= 2000 and 50 <= new_h <= 2000:
+            self.resize(new_w, new_h)
+            self.save_settings(new_w, new_h, self.windowOpacity())
 
 if __name__ == "__main__":
     # High DPI support

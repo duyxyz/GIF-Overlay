@@ -320,12 +320,12 @@ class ResizeOpacityDialog(QDialog):
         line.setStyleSheet("background: #333333;")
         layout.addWidget(line)
 
-        if self.p.original_size:
+        if self.p.original_size and self.p.original_size.isValid() and self.p.original_size.width() > 0:
             self.orig_w = self.p.original_size.width()
             self.orig_h = self.p.original_size.height()
         else:
-            self.orig_w = self.p.width()
-            self.orig_h = self.p.height()
+            self.orig_w = max(self.p.width(), 100)
+            self.orig_h = max(self.p.height(), 100)
 
         self.slider_scale = ModernSlider("Scale", 10, 300, 100, "%", self)
         self.slider_w = ModernSlider("Width", 50, 2000, self.p.width(), "px", self)
@@ -416,6 +416,14 @@ class ResizeOpacityDialog(QDialog):
         self.p.lock_aspect_ratio = (state == Qt.Checked)
 
     def reset_defaults(self):
+        # Determine the most accurate default size
+        default_size = self.p.original_size
+        if self.p.current_gif_path in self.p.original_size_cache:
+            default_size = self.p.original_size_cache[self.p.current_gif_path]
+            
+        self.orig_w = default_size.width()
+        self.orig_h = default_size.height()
+        
         self.slider_w.setValue(self.orig_w)
         self.slider_h.setValue(self.orig_h)
         self.slider_scale.setValue(100)
