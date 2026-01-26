@@ -1,4 +1,4 @@
-name: Build and Release (Complete Package)
+name: Build and Release (Portable + Setup)
 
 on:
   push:
@@ -27,31 +27,31 @@ jobs:
 
     - name: Build with PyInstaller (Directory Mode)
       run: |
-        # Use simple name without spaces for better compatibility
+        # Build the folder structure first
         pyinstaller --noconfirm --onedir --windowed --icon "assets/app_icon.ico" --add-data "assets;assets" --add-data "demo1.gif;." --name "GIF-Overlay" "GIF Overlay.py"
 
-    - name: List Build Result (Debug)
+    - name: Create Portable Zip
       shell: powershell
       run: |
-        echo "Contents of dist/ directory:"
-        ls dist/
-        echo "Contents of dist/GIF-Overlay/ directory:"
-        ls dist/GIF-Overlay/
-
-    - name: Create Zip Package
-      shell: powershell
-      run: |
-        # Remove any stray zip files if they exist
+        # 1. Clean old zips
         if (Test-Path "dist/*.zip") { Remove-Item "dist/*.zip" }
         
-        # Zip the entire folder itself to preserve structure (Standard Release Style)
-        Compress-Archive -Path "dist/GIF-Overlay" -DestinationPath "dist/GIF-Overlay.zip"
+        # 2. Zip the folder as the Portable version
+        Compress-Archive -Path "dist/GIF-Overlay" -DestinationPath "dist/GIF-Overlay-Portable.zip"
+
+    - name: Compile Setup (Inno Setup)
+      uses: Minionguyjpro/Inno-Setup-Action@v1.2.5
+      with:
+        path: setup_script.iss
 
     - name: Create Release
       if: startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v2
       with:
-        files: dist/GIF-Overlay.zip
+        # Upload BOTH the Portable Zip and the Setup Executable
+        files: |
+          dist/GIF-Overlay-Portable.zip
+          dist/GIF-Overlay-Setup.exe
         name: Release ${{ github.ref_name }}
         draft: false
         prerelease: false
