@@ -1,4 +1,4 @@
-name: Build and Release (Directory + Zip)
+name: Build and Release (Complete Package)
 
 on:
   push:
@@ -27,25 +27,33 @@ jobs:
 
     - name: Build with PyInstaller (Directory Mode)
       run: |
-        # Ensure we add everything needed. PyInstaller will create dist/GIF-Overlay/ folder
+        # Use simple name without spaces for better compatibility
         pyinstaller --noconfirm --onedir --windowed --icon "assets/app_icon.ico" --add-data "assets;assets" --add-data "demo1.gif;." --name "GIF-Overlay" "GIF Overlay.py"
 
-    - name: Verify Build
-      run: |
-        ls dist/GIF-Overlay/
-
-    - name: Compress Build Directory to Zip
+    - name: List Build Result (Debug)
       shell: powershell
       run: |
-        # We zip the entire folder so that when users unzip, it stays in a folder.
-        # This will include GIF-Overlay.exe and the _internal folder together.
-        Compress-Archive -Path "dist/GIF-Overlay" -DestinationPath "dist/GIF-Overlay-Windows.zip"
+        echo "Contents of dist/ directory:"
+        ls dist/
+        echo "Contents of dist/GIF-Overlay/ directory:"
+        ls dist/GIF-Overlay/
+
+    - name: Create Zip Package
+      shell: powershell
+      run: |
+        # Remove any stray zip files if they exist
+        if (Test-Path "dist/*.zip") { Remove-Item "dist/*.zip" }
+        
+        # Zip the entire contents of the build folder
+        # Files like GIF-Overlay.exe will be at the root of the zip if we use /*
+        cd dist/GIF-Overlay
+        Compress-Archive -Path * -DestinationPath "../GIF-Overlay-Full.zip"
 
     - name: Create Release
       if: startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v2
       with:
-        files: dist/GIF-Overlay-Windows.zip
+        files: dist/GIF-Overlay-Full.zip
         name: Release ${{ github.ref_name }}
         draft: false
         prerelease: false
