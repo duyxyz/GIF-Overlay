@@ -1,8 +1,8 @@
 #define MyAppName "GIF Overlay"
-#define MyAppVersion "1.0.7"
+#define MyAppVersion "1.1.0"
 #define MyAppPublisher "DuyXYZ"
 #define MyAppURL "https://github.com/duyxyz/GIF-Overlay"
-#define MyAppExeName "GIF Overlay.exe"
+#define MyAppExeName "GIF-Overlay.exe"
 
 [Setup]
 ; Basic setup details
