@@ -2,5 +2,3 @@
 
 [![Download GIF-Overlay](https://a.fsdn.com/con/app/sf-download-button)](https://sourceforge.net/projects/gif-overlay/files/latest/download) 
 
-git tag v1.0.1
-git push origin v1.0.1
