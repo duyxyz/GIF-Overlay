@@ -1,290 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>GIF Overlay - Floating GIF Display Application</title>
   <link rel="icon" href="icon.png" type="image/png" />
-  <style>
-    *, *::before, *::after { box-sizing: border-box; }
-    body {
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #fff;
-      color: #111;
-      margin: 0;
-      padding: 0;
-      line-height: 1.5;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
-    a { color: #0366d6; text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 24px;
-      border-bottom: 1px solid #e1e4e8;
-      background-color: #fff;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-    header .logo {
-      display: flex;
-      align-items: center;
-      font-weight: 600;
-      font-size: 1.5rem;
-      color: #24292e;
-      gap: 10px;
-      user-select: none;
-    }
-    header .logo img {
-      height: 36px;
-      width: 36px;
-      border-radius: 8px;
-      object-fit: contain;
-    }
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .button {
-      appearance: none;
-      border: none;
-      background: none;
-      color: #0f1923;
-      cursor: pointer;
-      position: relative;
-      padding: 8px 16px;
-      text-transform: uppercase;
-      font-weight: bold;
-      font-size: 14px;
-      transition: all .15s ease;
-      white-space: nowrap;
-      display: flex;
-      align-items: center;
-    }
-    .button::before, .button::after {
-      content: '';
-      display: block;
-      position: absolute;
-      right: 0; left: 0;
-      height: calc(50% - 5px);
-      border: 1px solid #7D8082;
-      transition: all .15s ease;
-    }
-    .button::before { top: 0; border-bottom-width: 0; }
-    .button::after { bottom: 0; border-top-width: 0; }
-    .button:active, .button:focus { outline: none; }
-    .button:active::before, .button:active::after { right: 3px; left: 3px; }
-    .button:active::before { top: 3px; }
-    .button:active::after { bottom: 3px; }
-    .button_lg {
-      position: relative;
-      display: block;
-      padding: 10px 20px;
-      color: #fff;
-      background-color: #0f1923;
-      overflow: hidden;
-      box-shadow: inset 0px 0px 0px 1px transparent;
-      border-radius: 6px;
-    }
-    .button_lg::before {
-      content: '';
-      display: block;
-      position: absolute;
-      top: 0; left: 0;
-      width: 2px; height: 2px;
-      background-color: #0f1923;
-    }
-    .button_lg::after {
-      content: '';
-      display: block;
-      position: absolute;
-      right: 0; bottom: 0;
-      width: 4px; height: 4px;
-      background-color: #0f1923;
-      transition: all .2s ease;
-    }
-    .button_sl {
-      display: block;
-      position: absolute;
-      top: 0; bottom: -1px; left: -8px;
-      width: 0;
-      background-color: #ff4655;
-      transform: skew(-15deg);
-      transition: all .2s ease;
-      border-radius: 6px;
-    }
-    .button_text {
-      position: relative;
-      padding: 0 8px;
-    }
-    .button:hover { color: #0f1923; }
-    .button:hover .button_sl { width: calc(100% + 15px); }
-    .button:hover .button_lg::after { background-color: #fff; }
-    .btn-secondary {
-      padding: 10px 18px;
-      border: 1px solid #d1d5da;
-      border-radius: 6px;
-      font-weight: 600;
-      color: #24292e;
-      background-color: #fafbfc;
-      cursor: pointer;
-      transition: background-color 0.3s ease, border-color 0.3s ease;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.9rem;
-      white-space: nowrap;
-    }
-    .btn-secondary:hover { background-color: #f3f4f6; border-color: #a2a9b1; }
-    #lang-select {
-      padding: 6px 12px;
-      font-size: 0.9rem;
-      border-radius: 6px;
-      border: 1px solid #d1d5da;
-      background-color: #fafbfc;
-      color: #24292e;
-      cursor: pointer;
-      user-select: none;
-      white-space: nowrap;
-    }
-    main {
-      max-width: 960px;
-      margin: 40px auto;
-      padding: 0 24px;
-      flex-grow: 1;
-    }
-    main h1 {
-      font-size: 2.8rem;
-      font-weight: 700;
-      margin-bottom: 10px;
-      color: #24292e;
-    }
-    main p.subtitle {
-      font-size: 1.3rem;
-      color: #586069;
-      margin-bottom: 36px;
-      font-weight: 600;
-    }
-    /* Bố cục 4 tính năng cùng hàng */
-    .feature-grid {
-      display: flex;
-      gap: 32px;
-      margin-bottom: 50px;
-      justify-content: space-between;
-      flex-wrap: wrap;
-    }
-    .feature-item {
-      flex: 1 1 22%;
-      min-width: 200px;
-      padding-bottom: 0;
-      border-bottom: none;
-    }
-    .feature-item strong {
-      font-weight: 700;
-      display: block;
-      margin-bottom: 8px;
-      font-size: 1.1rem;
-      color: #24292e;
-    }
-    .feature-item p {
-      margin: 0;
-      color: #586069;
-      font-size: 0.95rem;
-      line-height: 1.4;
-    }
-    .article {
-      border-top: 1px solid #e1e4e8;
-      padding-top: 32px;
-      max-width: 800px;
-      margin: 0 auto 80px;
-      color: #24292e;
-      font-size: 1rem;
-      line-height: 1.5;
-    }
-    .article time {
-      float: right;
-      font-size: 0.9rem;
-      color: #6a737d;
-      font-weight: 500;
-    }
-    .article h2 {
-      font-size: 1.9rem;
-      font-weight: 700;
-      margin-bottom: 12px;
-      border-bottom: 1px solid #e1e4e8;
-      padding-bottom: 6px;
-    }
-    .article p strong { font-weight: 700; }
-    .article p code {
-      background-color: #f6f8fa;
-      color: #c7254e;
-      font-family: monospace;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 0.95rem;
-    }
-    .article ol { padding-left: 20px; margin-bottom: 1em; }
-    .article ol li { margin-bottom: 0.8em; font-weight: 600; }
-    footer {
-      border-top: 1px solid #e1e4e8;
-      padding: 20px 24px;
-      text-align: center;
-      color: #586069;
-      font-size: 0.9rem;
-      user-select: none;
-    }
-    @media (max-width: 1024px) {
-      .feature-grid { flex-wrap: wrap; gap: 24px; }
-      .feature-item { min-width: 180px; }
-    }
-    @media (max-width: 800px) {
-      .feature-grid { flex-direction: column; gap: 12px; }
-      .feature-item { min-width: unset; flex: 1 1 100%; }
-    }
-    @media (max-width: 720px) {
-      header { flex-wrap: wrap; justify-content: center; gap: 12px; }
-      main { margin: 24px auto; padding: 0 16px; }
-      .header-actions { justify-content: center; width: 100%; }
-      .button, .btn-secondary, #lang-select { width: 100%; text-align: center; }
-      .feature-grid { flex-direction: column; gap: 12px; }
-      .feature-item { flex: 1 1 100%; min-width: unset; }
-    }
-	.demo-gallery {
-  max-width: 900px;
-  margin: 32px auto 0 auto;
-  padding: 0 16px 32px 16px;
-}
-.gif-row {
-  display: flex;
-  gap: 20px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-.gif-row img {
-  width: 240px;
-  max-width: 100%;
-  border-radius: 12px;
-  box-shadow: 0 3px 16px rgba(0,0,0,0.07);
-  background: #f7f7f7;
-  transition: transform 0.2s;
-}
-.gif-row img:hover {
-  transform: scale(1.045) rotate(-1.5deg);
-}
-@media (max-width: 800px) {
-  .gif-row { flex-direction: column; align-items: center; gap: 16px; }
-  .gif-row img { width: 90%; }
-}
-
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
   <header>
     <a href="#" class="logo" aria-label="GIF Overlay Logo">
@@ -292,13 +16,15 @@
       GIF Overlay
     </a>
     <div class="header-actions">
-      <button class="button" id="download-btn" onclick="window.location.href='https://github.com/DuyNguyen2k6/GIF-Overlay/releases/download/app/GIFOverlay_Setup.exe'">
+      <button class="button" id="download-btn"
+        onclick="window.location.href='https://github.com/duyxyz/GIF-Overlay/releases/'">
         <span class="button_lg">
           <span class="button_sl"></span>
           <span class="button_text" id="download-text">Download Now</span>
         </span>
       </button>
-      <a href="https://github.com/DuyNguyen2k6/GIF-Overlay" class="btn-secondary" aria-label="View Source Code on GitHub" target="_blank" rel="noopener noreferrer" id="source-code-link">
+      <a href="https://github.com/duyxyz/GIF-Overlay" class="btn-secondary" aria-label="View Source Code on GitHub"
+        target="_blank" rel="noopener noreferrer" id="source-code-link">
         Source Code
       </a>
       <select id="lang-select" aria-label="Select language" onchange="changeLanguage(this.value)">
@@ -311,7 +37,7 @@
   <main>
     <h1 id="title">GIF Overlay - Floating GIF Display Application</h1>
     <p class="subtitle" id="subtitle">Easily customize size, position, opacity, and many other useful features.</p>
-    
+
     <!-- Phần 4 tính năng nằm cùng 1 hàng -->
     <section class="feature-grid" aria-label="Features">
       <div class="feature-item">
@@ -331,22 +57,25 @@
         <p id="feature4-desc">Save GIF images and easily reopen, minimize to system tray.</p>
       </div>
     </section>
-  
-  <section class="demo-gallery" aria-label="GIF Overlay Demo">
-  <h2 style="text-align:center; font-size:1.2rem; margin-bottom:20px; color:#24292e">GIF Overlay in Action</h2>
-  <div class="gif-row">
-    <img src="demo1.gif" alt="Demo GIF 1" />
-    <img src="demo2.gif" alt="Demo GIF 2" />
-    <img src="demo3.gif" alt="Demo GIF 3" />
-  </div>
-</section>
+
+    <section class="demo-gallery" aria-label="GIF Overlay Demo">
+      <h2>GIF Overlay in Action</h2>
+      <div class="gif-row">
+        <img src="demo1.gif" alt="Demo GIF 1" />
+        <img src="demo2.gif" alt="Demo GIF 2" />
+        <img src="demo3.gif" alt="Demo GIF 3" />
+      </div>
+    </section>
 
     <section class="article" aria-label="About GIF Overlay">
       <time datetime="2025-06-07" id="publish-date">Published: June 7, 2025</time>
       <h2 id="about-title">About GIF Overlay</h2>
-      <p id="about-p1"><strong>GIF Overlay</strong> is an application that helps you display floating GIFs on Windows screen, with many useful features to personalize your work and entertainment experience.</p>
-      <p id="about-p2">The app is developed to be simple, lightweight, easy to use, and supports versatile customization: resize, opacity, save position, lock window, pause/play GIF, and easy reuse.</p>
-      <p id="about-p3">With GIF Overlay, you can make your screen more lively and personal without affecting system performance.</p>
+      <p id="about-p1"><strong>GIF Overlay</strong> is an application that helps you display floating GIFs on Windows
+        screen, with many useful features to personalize your work and entertainment experience.</p>
+      <p id="about-p2">The app is developed to be simple, lightweight, easy to use, and supports versatile
+        customization: resize, opacity, save position, lock window, pause/play GIF, and easy reuse.</p>
+      <p id="about-p3">With GIF Overlay, you can make your screen more lively and personal without affecting system
+        performance.</p>
     </section>
   </main>
 
@@ -354,73 +83,7 @@
     &copy; 2025 GIF Overlay - All rights reserved.
   </footer>
 
-  <script>
-    const langData = {
-      vi: {
-        title: "GIF Overlay - Ứng dụng hiển thị ảnh GIF nổi trên màn hình",
-        subtitle: "Dễ dàng tùy chỉnh kích thước, vị trí, độ mờ và nhiều tính năng tiện ích khác.",
-        downloadText: "Tải Ngay",
-        sourceCode: "Mã Nguồn",
-        feature1Title: "Hiển thị GIF nổi",
-        feature1Desc: "Hiển thị GIF không viền, trong suốt và luôn nổi trên cùng mọi cửa sổ khác.",
-        feature2Title: "Tùy chỉnh dễ dàng",
-        feature2Desc: "Thay đổi kích thước, độ mờ và vị trí lưu tự động, khóa cửa sổ tiện lợi.",
-        feature3Title: "Tiết kiệm CPU",
-        feature3Desc: "Tạm dừng hoặc phát GIF theo ý muốn để giảm tải cho hệ thống.",
-        feature4Title: "Lưu và sử dụng lại",
-        feature4Desc: "Lưu ảnh GIF và mở lại dễ dàng, thu nhỏ vào khay hệ thống tiện dụng.",
-        publishDate: "Đăng ngày: 7 tháng 6 năm 2025",
-        aboutTitle: "Giới thiệu về GIF Overlay",
-        aboutP1: "<strong>GIF Overlay</strong> là ứng dụng giúp bạn hiển thị ảnh GIF nổi trên màn hình Windows, với nhiều tính năng tiện lợi giúp cá nhân hóa trải nghiệm làm việc và giải trí.",
-        aboutP2: "Ứng dụng được phát triển nhằm mục đích đơn giản, nhẹ nhàng, dễ sử dụng và có khả năng tùy chỉnh đa dạng: thay đổi kích thước, độ mờ, vị trí lưu, khóa cửa sổ không cho di chuyển, tạm dừng hoặc phát GIF theo ý muốn, cũng như lưu ảnh GIF và sử dụng lại dễ dàng.",
-        aboutP3: "Với GIF Overlay, bạn có thể làm cho màn hình trở nên sinh động và cá tính hơn mà không ảnh hưởng đến hiệu năng hệ thống."
-      },
-      en: {
-        title: "GIF Overlay - Floating GIF Display Application",
-        subtitle: "Easily customize size, position, opacity, and many other useful features.",
-        downloadText: "Download Now",
-        sourceCode: "Source Code",
-        feature1Title: "Floating GIF Display",
-        feature1Desc: "Display borderless, transparent GIFs that always stay on top of other windows.",
-        feature2Title: "Easy Customization",
-        feature2Desc: "Change size, opacity, save position automatically, and lock the window easily.",
-        feature3Title: "CPU Saving",
-        feature3Desc: "Pause or play GIFs as you want to reduce system load.",
-        feature4Title: "Save & Reuse",
-        feature4Desc: "Save GIF images and easily reopen, minimize to system tray.",
-        publishDate: "Published: June 7, 2025",
-        aboutTitle: "About GIF Overlay",
-        aboutP1: "<strong>GIF Overlay</strong> is an application that helps you display floating GIFs on Windows screen, with many useful features to personalize your work and entertainment experience.",
-        aboutP2: "The app is developed to be simple, lightweight, easy to use, and supports versatile customization: resize, opacity, save position, lock window, pause/play GIF, and easy reuse.",
-        aboutP3: "With GIF Overlay, you can make your screen more lively and personal without affecting system performance."
-      }
-    };
-
-    function changeLanguage(lang) {
-      const data = langData[lang];
-      document.documentElement.lang = lang;
-      document.getElementById("title").textContent = data.title;
-      document.getElementById("subtitle").textContent = data.subtitle;
-      document.getElementById("download-text").textContent = data.downloadText;
-      document.getElementById("source-code-link").textContent = data.sourceCode;
-      document.getElementById("feature1-title").textContent = data.feature1Title;
-      document.getElementById("feature1-desc").textContent = data.feature1Desc;
-      document.getElementById("feature2-title").textContent = data.feature2Title;
-      document.getElementById("feature2-desc").textContent = data.feature2Desc;
-      document.getElementById("feature3-title").textContent = data.feature3Title;
-      document.getElementById("feature3-desc").textContent = data.feature3Desc;
-      document.getElementById("feature4-title").textContent = data.feature4Title;
-      document.getElementById("feature4-desc").textContent = data.feature4Desc;
-      document.getElementById("publish-date").textContent = data.publishDate;
-      document.getElementById("about-title").textContent = data.aboutTitle;
-      document.getElementById("about-p1").innerHTML = data.aboutP1;
-      document.getElementById("about-p2").textContent = data.aboutP2;
-      document.getElementById("about-p3").textContent = data.aboutP3;
-    }
-
-    // Set default language to English
-    changeLanguage('en');
-    document.getElementById('lang-select').value = 'en';
-  </script>
+  <script src="script.js"></script>
 </body>
+
 </html>
