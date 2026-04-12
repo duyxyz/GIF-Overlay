@@ -2,8 +2,6 @@ name: Build and Release (Portable + Setup)
 
 on:
   push:
-    tags:
-      - 'v*'
     branches:
       - main
 
@@ -14,16 +12,33 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Generate Auto Version Tag
+      id: gen_tag
+      shell: bash
+      run: |
+        COUNT=$(git rev-list --count HEAD)
+        # N=1 -> i=0 -> v1.0. N=10 -> i=9 -> v1.9. N=11 -> i=10 -> v2.0
+        INDEX=$((COUNT - 1))
+        if [ $INDEX -lt 0 ]; then INDEX=0; fi
+        MAJOR=$((1 + INDEX / 10))
+        MINOR=$((INDEX % 10))
+        TAG="v${MAJOR}.${MINOR}"
+        echo "TAG=$TAG" >> $GITHUB_ENV
+        echo "Auto generated tag: $TAG"
 
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
+        cache: 'pip'
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install PyQt5 pyinstaller
+        pip install -r requirements.txt
 
     - name: Build with PyInstaller (Directory Mode)
       run: |
@@ -45,14 +60,14 @@ jobs:
         path: src/setup_script.iss
 
     - name: Create Release
-      if: startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v2
       with:
         # Upload BOTH the Portable Zip and the Setup Executable
         files: |
           dist/GIF-Overlay-Portable.zip
           dist/GIF-Overlay-Setup.exe
-        name: Release ${{ github.ref_name }}
+        tag_name: ${{ env.TAG }}
+        name: Release ${{ env.TAG }}
         draft: false
         prerelease: false
       env:
