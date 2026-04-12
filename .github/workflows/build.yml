@@ -28,7 +28,7 @@ jobs:
     - name: Build with PyInstaller (Directory Mode)
       run: |
         # Build the folder structure first
-        pyinstaller --noconfirm --onedir --windowed --icon "src/assets/app_icon.ico" --add-data "src/assets;assets" --add-data "demo1.gif;." --name "GIF-Overlay" "src/GIF Overlay.py"
+        pyinstaller --noconfirm --onedir --windowed --icon "src/assets/app_icon.ico" --add-data "src/assets;assets" --add-data "src/demo1.gif;." --name "GIF-Overlay" "src/GIF Overlay.py"
 
     - name: Create Portable Zip
       shell: powershell
@@ -42,7 +42,7 @@ jobs:
     - name: Compile Setup (Inno Setup)
       uses: Minionguyjpro/Inno-Setup-Action@v1.2.5
       with:
-        path: setup_script.iss
+        path: src/setup_script.iss
 
     - name: Create Release
       if: startsWith(github.ref, 'refs/tags/')
