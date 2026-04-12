@@ -8,8 +8,8 @@ from PyQt6.QtWidgets import (
     QApplication, QLabel, QWidget,
     QVBoxLayout, QMessageBox, QSystemTrayIcon
 )
-from PyQt6.QtGui import QMovie, QIcon, QPalette, QColor, QPixmap
-from PyQt6.QtCore import Qt, QSize, QTimer
+from PyQt6.QtGui import QMovie, QIcon, QPalette, QColor, QPixmap, QCursor
+from PyQt6.QtCore import Qt, QSize, QTimer, QPoint
 import ctypes
 
 from components.constants import TRAY_MESSAGE_DURATION
@@ -27,6 +27,7 @@ class GifOnTop(SettingsMixin, TrayMixin, MediaMixin, QWidget):
         super().__init__()
         self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setMouseTracking(True) # Cần thiết để đổi con trỏ chuột khi hover
 
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
@@ -34,8 +35,8 @@ class GifOnTop(SettingsMixin, TrayMixin, MediaMixin, QWidget):
 
         self.gif_label = QLabel()
         self.gif_label.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.gif_label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self.gif_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.gif_label.setStyleSheet("background: transparent;")
         self.gif_label.setMinimumSize(1, 1)
         self.layout.addWidget(self.gif_label)
 
@@ -44,7 +45,12 @@ class GifOnTop(SettingsMixin, TrayMixin, MediaMixin, QWidget):
         self.current_gif_path: Optional[str] = None
         self.original_size: Optional[QSize] = None
 
+        # Interaction States
         self.drag_position = None
+        self.is_resizing = False
+        self.resize_mode = None # 'R', 'B', 'BR'
+        self.RESIZE_MARGIN = 15
+        
         self.is_locked = False
         self.is_minimized_to_tray = False
         self.lock_aspect_ratio = True
@@ -103,7 +109,7 @@ class GifOnTop(SettingsMixin, TrayMixin, MediaMixin, QWidget):
         if getattr(self, "_force_quit", False):
             event.accept()
             return
-            
+
         msg = QMessageBox(self)
         msg.setWindowFlags(msg.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
         msg.setWindowTitle("GIF Overlay")
@@ -119,14 +125,87 @@ class GifOnTop(SettingsMixin, TrayMixin, MediaMixin, QWidget):
         else: event.ignore()
 
     def mousePressEvent(self, event):
-        if not self.is_locked and event.button() == Qt.MouseButton.LeftButton:
-            self.drag_position = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+        if self.is_locked: return
+        
+        if event.button() == Qt.MouseButton.LeftButton:
+            pos = event.position().toPoint()
+            w, h = self.width(), self.height()
+            margin = self.RESIZE_MARGIN
+            
+            # Kiểm tra xem có đang nhấn vào vùng cạnh để resize không
+            is_right = pos.x() > w - margin
+            is_bottom = pos.y() > h - margin
+            
+            if is_right and is_bottom:
+                self.is_resizing = True
+                self.resize_mode = Qt.CursorShape.SizeFDiagCursor
+            elif is_right:
+                self.is_resizing = True
+                self.resize_mode = Qt.CursorShape.SizeHorCursor
+            elif is_bottom:
+                self.is_resizing = True
+                self.resize_mode = Qt.CursorShape.SizeVerCursor
+            else:
+                self.is_resizing = False
+                self.resize_mode = None
+                self.drag_position = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+            
             event.accept()
 
     def mouseMoveEvent(self, event):
-        if not self.is_locked and event.buttons() & Qt.MouseButton.LeftButton and self.drag_position:
+        if self.is_locked: return
+
+        pos = event.position().toPoint()
+        w, h = self.width(), self.height()
+        margin = self.RESIZE_MARGIN
+
+        # 1. Update Cursor (khi không nhấn phím nào)
+        if not event.buttons():
+            is_right = pos.x() > w - margin
+            is_bottom = pos.y() > h - margin
+            
+            if is_right and is_bottom:
+                self.setCursor(Qt.CursorShape.SizeFDiagCursor)
+            elif is_right:
+                self.setCursor(Qt.CursorShape.SizeHorCursor)
+            elif is_bottom:
+                self.setCursor(Qt.CursorShape.SizeVerCursor)
+            else:
+                self.setCursor(Qt.CursorShape.ArrowCursor)
+            return
+
+        # 2. Handle Resizing
+        if self.is_resizing and event.buttons() & Qt.MouseButton.LeftButton:
+            global_pos = event.globalPosition().toPoint()
+            win_top_left = self.frameGeometry().topLeft()
+            
+            new_w = w
+            new_h = h
+            
+            if self.resize_mode == Qt.CursorShape.SizeHorCursor:
+                new_w = max(50, global_pos.x() - win_top_left.x())
+            elif self.resize_mode == Qt.CursorShape.SizeVerCursor:
+                new_h = max(50, global_pos.y() - win_top_left.y())
+            elif self.resize_mode == Qt.CursorShape.SizeFDiagCursor:
+                new_w = max(50, global_pos.x() - win_top_left.x())
+                new_h = max(50, global_pos.y() - win_top_left.y())
+
+
+            
+            self.resize(new_w, new_h)
+            event.accept()
+            
+        # 3. Handle Moving
+        elif not self.is_resizing and event.buttons() & Qt.MouseButton.LeftButton and self.drag_position:
             self.move(event.globalPosition().toPoint() - self.drag_position)
             event.accept()
+
+    def mouseReleaseEvent(self, event):
+        if self.is_resizing:
+            self.is_resizing = False
+            self.resize_mode = None
+            self.save_settings(self.width(), self.height(), self.windowOpacity())
+        self.drag_position = None
 
     def quit_app(self):
         self._force_quit = True
@@ -135,24 +214,7 @@ class GifOnTop(SettingsMixin, TrayMixin, MediaMixin, QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    
-    # Global Dark Palette for better Tray Menu support
-    palette = QPalette()
-    palette.setColor(QPalette.ColorRole.Window, QColor(30, 30, 30))
-    palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.white)
-    palette.setColor(QPalette.ColorRole.Base, QColor(25, 25, 25))
-    palette.setColor(QPalette.ColorRole.AlternateBase, QColor(30, 30, 30))
-    palette.setColor(QPalette.ColorRole.ToolTipBase, Qt.GlobalColor.white)
-    palette.setColor(QPalette.ColorRole.ToolTipText, Qt.GlobalColor.white)
-    palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.white)
-    palette.setColor(QPalette.ColorRole.Button, QColor(45, 45, 45))
-    palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.white)
-    palette.setColor(QPalette.ColorRole.BrightText, Qt.GlobalColor.red)
-    palette.setColor(QPalette.ColorRole.Link, QColor(42, 130, 218))
-    palette.setColor(QPalette.ColorRole.Highlight, QColor(42, 130, 218))
-    palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.black)
-    app.setPalette(palette)
-    
-    app.setStyle('Fusion')
+    # Set native style
+    app.setStyle('windows11')
     window = GifOnTop()
     sys.exit(app.exec())

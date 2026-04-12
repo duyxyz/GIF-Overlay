@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QIcon, QAction
 from PyQt6.QtCore import Qt
 
-from components.constants import DARK_MENU_STYLESHEET, TRAY_MESSAGE_DURATION
+from components.constants import TRAY_MESSAGE_DURATION
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,6 @@ class TrayMixin:
         self.setWindowIcon(icon)
 
         self.tray_menu = QMenu()
-        self.tray_menu.setStyleSheet(DARK_MENU_STYLESHEET)
         
         self.tray_show_action = QAction("Show", self)
         self.tray_show_action.setIcon(self.load_icon("show.png") or QIcon())

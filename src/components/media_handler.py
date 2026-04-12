@@ -5,14 +5,15 @@ import logging
 from pathlib import Path
 
 from PyQt6.QtWidgets import (
-    QApplication, QMenu, QFileDialog, QMessageBox, QDialog
+    QApplication, QMenu, QFileDialog, QMessageBox, QDialog,
+    QWidgetAction, QSlider, QHBoxLayout, QWidget, QLabel
 )
 from PyQt6.QtGui import QMovie, QIcon, QPixmap, QImageReader
 from PyQt6.QtCore import Qt, QSize, QTimer
 
 from components.constants import (
     CONFIG_FILE, GIF_SAVE_DIR,
-    DEFAULT_MEDIA_SIZE, FALLBACK_WINDOW_SIZE, DARK_MENU_STYLESHEET
+    DEFAULT_MEDIA_SIZE, FALLBACK_WINDOW_SIZE
 )
 from components.dialogs import SavedGifDialog, ResizeOpacityDialog, ModernInputDialog
 
@@ -33,8 +34,10 @@ class MediaMixin:
             except Exception as e:
                 logger.warning("Error loading last gif: %s", e)
         
-        base_dir = Path(getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__))))
-        demo_gif = base_dir / "demo1.gif"
+    def load_initial_gif(self):
+        # Đường dẫn từ src/components -> src/assets
+        base_dir = Path(getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))).parent
+        demo_gif = base_dir / "assets" / "demo1.gif"
         if demo_gif.exists():
             self.load_media(str(demo_gif), reset_default=True)
         else:
@@ -42,9 +45,11 @@ class MediaMixin:
                 self, "Welcome", "No GIF or Image loaded. Right-click to select one!"
             ))
 
+
+
     def load_media(self, path, reset_default=False):
         if not os.path.exists(path): return
-        
+
         # Clean up previous media
         if self.movie:
             self.movie.stop()
@@ -172,7 +177,6 @@ class MediaMixin:
     def create_menu(self):
         """Create the context menu with dynamic Lock/Unlock state"""
         menu = QMenu(self)
-        menu.setStyleSheet(DARK_MENU_STYLESHEET)
         
         if self.is_locked:
             act_unlock = menu.addAction("Unlock")
@@ -197,10 +201,6 @@ class MediaMixin:
         act_saved.setIcon(self.load_icon("saved.png") or QIcon())
         act_saved.triggered.connect(self.open_saved_gif_dialog)
 
-        act_settings = menu.addAction("Settings")
-        act_settings.setIcon(self.load_icon("settings.png") or QIcon())
-        act_settings.triggered.connect(self.open_resize_opacity_dialog)
-
         act_pause = menu.addAction("Play/Pause")
         act_pause.setIcon(self.load_icon("pause.png") or QIcon())
         act_pause.triggered.connect(self.toggle_pause_gif)
@@ -208,6 +208,14 @@ class MediaMixin:
         act_save = menu.addAction("Save")
         act_save.setIcon(self.load_icon("save.png") or QIcon())
         act_save.triggered.connect(self.save_gif_to_documents)
+
+        menu.addSeparator()
+
+        opacity_menu = menu.addMenu("Opacity")
+        opacity_menu.setIcon(self.load_icon("settings.png") or QIcon())
+        self._add_opacity_slider_to_menu(opacity_menu)
+        
+        menu.addSeparator()
 
         close_menu = menu.addMenu("Close")
         close_menu.setIcon(self.load_icon("close.png") or QIcon())
@@ -226,6 +234,38 @@ class MediaMixin:
             act_min.triggered.connect(self.minimize_to_tray)
 
         return menu
+
+    def _add_opacity_slider_to_menu(self, menu: QMenu):
+        """Tích hợp thanh kéo độ mờ trực tiếp vào menu"""
+        action = QWidgetAction(menu)
+        container = QWidget()
+        layout = QHBoxLayout(container)
+        layout.setContentsMargins(15, 5, 15, 5)
+        layout.setSpacing(10)
+
+        label = QLabel("Opacity")
+        # Sử dụng font nhỏ hơn cho menu
+        font = label.font()
+        font.setPointSize(9)
+        label.setFont(font)
+        
+        slider = QSlider(Qt.Orientation.Horizontal)
+        slider.setMinimum(10)
+        slider.setMaximum(100)
+        slider.setValue(int(self.windowOpacity() * 100))
+        slider.setFixedWidth(120)
+        
+        def update_opacity(val):
+            self.setWindowOpacity(val / 100)
+            self.save_settings(self.width(), self.height(), self.windowOpacity())
+
+        slider.valueChanged.connect(update_opacity)
+        
+        layout.addWidget(label)
+        layout.addWidget(slider)
+        
+        action.setDefaultWidget(container)
+        menu.addAction(action)
 
     def show_menu_at_center(self):
         self.create_menu().exec(self.mapToGlobal(self.rect().center()))

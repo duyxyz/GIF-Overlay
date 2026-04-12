@@ -1,10 +1,9 @@
 import os
 from pathlib import Path
-
-# Determine the base directory (where the script or exe lives)
 import sys
+from PyQt6.QtCore import QSize
 
-# For PyInstaller and regular execution
+# Determine the base directory
 BASE_DIR = Path(getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(sys.argv[0]))))
 
 DATA_DIR = BASE_DIR / "data"
@@ -22,34 +21,8 @@ GIF_SAVE_DIR = DATA_DIR / "GIF-save"
 GIF_SAVE_DIR.mkdir(parents=True, exist_ok=True)
 
 # --- UI Constants ---
-from PyQt6.QtCore import QSize
-
 DEFAULT_MEDIA_SIZE = QSize(400, 400)
 FALLBACK_WINDOW_SIZE = QSize(300, 300)
 TRAY_MESSAGE_DURATION = 1500
 
-DARK_MENU_STYLESHEET = """
-    QMenu { 
-        background: #252526; 
-        color: #EEEEEE; 
-        border: 1px solid #454545; 
-        padding: 4px; 
-    }
-    QMenu::item { 
-        padding: 6px 20px 6px 24px; 
-        border-radius: 4px;
-        margin: 1px 4px;
-    }
-    QMenu::item:selected { 
-        background: #37373D; 
-        color: #FFFFFF; 
-    }
-    QMenu::icon {
-        left: 4px;
-    }
-    QMenu::separator {
-        height: 1px;
-        background: #454545;
-        margin: 4px 8px;
-    }
-"""
+# Removed all manual stylesheets to allow true native rendering

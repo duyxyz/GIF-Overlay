@@ -1,9 +1,10 @@
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QSlider, QHBoxLayout
 from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QFont
 
 
 class ModernSlider(QWidget):
-    """Thanh trượt với nhãn — kế thừa native Fusion dark palette"""
+    """Thanh trượt với nhãn — sử dụng hoàn toàn style hệ thống"""
     valueChanged = pyqtSignal(int)
     sliderReleased = pyqtSignal()
     
@@ -16,17 +17,21 @@ class ModernSlider(QWidget):
         # Header layout for label and value
         head_layout = QHBoxLayout()
         self.label = QLabel(label_text)
-        self.label.setStyleSheet("font-weight: bold; font-size: 13px;")
+        
+        # Sử dụng QFont thay vì setStyleSheet để giữ độ native
+        font = QFont()
+        font.setBold(True)
+        self.label.setFont(font)
         
         self.value_label = QLabel(f"{current_val}{suffix}")
-        self.value_label.setStyleSheet("font-weight: bold; font-size: 13px;")
+        self.value_label.setFont(font)
         
         head_layout.addWidget(self.label)
         head_layout.addStretch()
         head_layout.addWidget(self.value_label)
         layout.addLayout(head_layout)
         
-        # Slider — native Fusion style
+        # Slider — 100% native
         self.slider = QSlider(Qt.Orientation.Horizontal)
         self.slider.setMinimum(min_val)
         self.slider.setMaximum(max_val)

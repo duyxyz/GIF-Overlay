@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import (
     QListWidget, QListWidgetItem, QHBoxLayout, QMessageBox,
     QApplication, QWidget, QLineEdit, QCheckBox
 )
-from PyQt6.QtGui import QMovie, QIcon, QPixmap
+from PyQt6.QtGui import QMovie, QIcon, QPixmap, QFont
 from PyQt6.QtCore import Qt, QSize
 import sys
 import os
@@ -14,7 +14,7 @@ from components.widgets import ModernSlider
 
 
 class ModernInputDialog(QDialog):
-    """Dialog nhập tên file — native Fusion dark"""
+    """Dialog nhập tên file — 100% native"""
     def __init__(self, title, label_text, initial_value="", parent=None):
         super().__init__(parent)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
@@ -22,11 +22,11 @@ class ModernInputDialog(QDialog):
         self.setWindowTitle(title)
         if self.main_window:
             self.main_window.apply_dark_title_bar(self)
-        self.setMinimumWidth(500)
+        self.setMinimumWidth(400)
         
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(15)
+        layout.setContentsMargins(15, 15, 15, 15)
+        layout.setSpacing(10)
         
         self.label = QLabel(label_text)
         layout.addWidget(self.label)
@@ -58,7 +58,7 @@ class ModernInputDialog(QDialog):
 
 
 class SavedGifDialog(QDialog):
-    """Dialog chọn media đã lưu — native Fusion dark"""
+    """Dialog chọn media đã lưu — 100% native"""
     def __init__(self, gif_dir, parent=None):
         super().__init__(parent)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
@@ -71,7 +71,7 @@ class SavedGifDialog(QDialog):
         self.setWindowTitle("Saved Media")
         if self.main_window:
             self.main_window.apply_dark_title_bar(self)
-        self.setMinimumSize(650, 450)
+        self.setMinimumSize(600, 400)
         
         self.setup_ui()
         self.load_gifs()
@@ -98,10 +98,12 @@ class SavedGifDialog(QDialog):
         self.preview_label = QLabel("Select media")
         self.preview_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.preview_label.setMinimumSize(250, 250)
-        self.preview_label.setStyleSheet("border-radius: 4px;")
+        self.preview_label.setFrameShape(QFrame.Shape.StyledPanel) # Native panel border
         
         self.info_label = QLabel("")
-        self.info_label.setStyleSheet("font-size: 11px; margin-left: 10px;")
+        font = QFont()
+        font.setPointSize(9)
+        self.info_label.setFont(font)
         
         preview_layout.addWidget(self.preview_label, 1)
         
@@ -266,21 +268,19 @@ class SavedGifDialog(QDialog):
 
 
 class ResizeOpacityDialog(QDialog):
-    """Dialog chỉnh kích thước và độ mờ — native Fusion dark"""
+    """Dialog chỉnh kích thước và độ mờ — 100% native"""
     def __init__(self, parent_window):
         super().__init__(parent_window)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
         self.p = parent_window
-        self.setWindowTitle("Adjust Size & Opacity")
+        self.setWindowTitle("Settings")
         if self.p:
             self.p.apply_dark_title_bar(self)
-        self.setFixedWidth(450)
+        self.setFixedWidth(400)
         
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setContentsMargins(15, 15, 15, 15)
         layout.setSpacing(15)
-
-
 
         if self.p.original_size and self.p.original_size.isValid() and self.p.original_size.width() > 0:
             self.orig_w = self.p.original_size.width()
@@ -302,7 +302,6 @@ class ResizeOpacityDialog(QDialog):
 
         self.cb_lock = QCheckBox("Lock Aspect Ratio")
         self.cb_lock.setChecked(self.p.lock_aspect_ratio)
-        self.cb_lock.setStyleSheet("margin-left: 10px; font-weight: 500;")
         layout.addWidget(self.cb_lock)
 
         self.updating = False
@@ -315,7 +314,7 @@ class ResizeOpacityDialog(QDialog):
         self.cb_lock.stateChanged.connect(self.update_lock_state)
 
         btn_layout = QHBoxLayout()
-        btn_reset = ModernButton("Reset to Default")
+        btn_reset = ModernButton("Reset")
         if self.p:
             btn_reset.setIcon(self.p.load_icon("settings.png") or QIcon())
         btn_reset.clicked.connect(self.reset_defaults)
@@ -327,7 +326,6 @@ class ResizeOpacityDialog(QDialog):
         
         btn_layout.addWidget(btn_reset)
         btn_layout.addWidget(btn_close)
-        layout.addSpacing(10)
         layout.addLayout(btn_layout)
 
     def accept(self):
