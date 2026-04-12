@@ -1,14 +1,13 @@
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QLabel, QFrame, QSplitter, 
     QListWidget, QListWidgetItem, QHBoxLayout, QMessageBox,
-    QCheckBox, QApplication, QWidget, QLineEdit
+    QApplication, QWidget, QLineEdit
 )
 from PyQt5.QtGui import QMovie, QIcon, QPixmap
 from PyQt5.QtCore import Qt, QSize
 import sys
 import os
 from pathlib import Path
-import ctypes
 
 from components.buttons import ModernButton
 from components.widgets import ModernSlider
@@ -352,9 +351,6 @@ class ResizeOpacityDialog(QDialog):
         self.slider_h.valueChanged.connect(self.update_height)
         self.slider_scale.valueChanged.connect(self.update_scale)
         self.slider_o.valueChanged.connect(self.update_opacity)
-
-        self.slider_scale.valueChanged.connect(self.update_scale)
-        self.slider_o.valueChanged.connect(self.update_opacity)
         
         self.cb_lock.stateChanged.connect(self.update_lock_state)
 
@@ -423,8 +419,11 @@ class ResizeOpacityDialog(QDialog):
     def reset_defaults(self):
         # Determine the most accurate default size
         default_size = self.p.original_size
-        if self.p.current_gif_path in self.p.original_size_cache:
+        if self.p.current_gif_path and self.p.current_gif_path in self.p.original_size_cache:
             default_size = self.p.original_size_cache[self.p.current_gif_path]
+        
+        if not default_size or not default_size.isValid():
+            return
             
         self.orig_w = default_size.width()
         self.orig_h = default_size.height()
