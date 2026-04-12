@@ -39,13 +39,25 @@ const langData = {
     }
 };
 
+let currentLang = 'en';
+
+function toggleLanguage() {
+    currentLang = currentLang === 'en' ? 'vi' : 'en';
+    changeLanguage(currentLang);
+}
+
 function changeLanguage(lang) {
     const data = langData[lang];
     document.documentElement.lang = lang;
+    currentLang = lang;
+    const langBtn = document.getElementById("lang-toggle");
+    if (langBtn) {
+        langBtn.textContent = lang.toUpperCase();
+    }
     document.getElementById("title").textContent = data.title;
     document.getElementById("subtitle").textContent = data.subtitle;
-    document.getElementById("download-text").textContent = data.downloadText;
-    document.getElementById("source-code-link").textContent = data.sourceCode;
+    document.getElementById("download-btn").setAttribute("title", data.downloadText);
+    document.getElementById("source-code-link").setAttribute("title", data.sourceCode);
     document.getElementById("feature1-title").textContent = data.feature1Title;
     document.getElementById("feature1-desc").textContent = data.feature1Desc;
     document.getElementById("feature2-title").textContent = data.feature2Title;
@@ -61,8 +73,26 @@ function changeLanguage(lang) {
     document.getElementById("about-p3").textContent = data.aboutP3;
 }
 
-// Set default language to English
+// Set default language to English and initialize theme
 document.addEventListener('DOMContentLoaded', () => {
     changeLanguage('en');
-    document.getElementById('lang-select').value = 'en';
+
+    // Theme initialization (Class applied via inline script to prevent flash)
+    const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    updateThemeIcon(savedTheme === 'dark');
 });
+
+function toggleTheme() {
+    const isDark = document.documentElement.classList.toggle('dark-mode');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    updateThemeIcon(isDark);
+}
+
+function updateThemeIcon(isDark) {
+    const sun = document.querySelector('.sun-icon');
+    const moon = document.querySelector('.moon-icon');
+    if (sun && moon) {
+        sun.style.display = isDark ? 'none' : 'block';
+        moon.style.display = isDark ? 'block' : 'none';
+    }
+}
