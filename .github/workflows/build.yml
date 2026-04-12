@@ -28,7 +28,7 @@ jobs:
     - name: Build with PyInstaller (Directory Mode)
       run: |
         # Build the folder structure first
-        pyinstaller --noconfirm --onedir --windowed --icon "assets/app_icon.ico" --add-data "assets;assets" --add-data "demo1.gif;." --name "GIF-Overlay" "GIF Overlay.py"
+        pyinstaller --noconfirm --onedir --windowed --icon "src/assets/app_icon.ico" --add-data "src/assets;assets" --add-data "demo1.gif;." --name "GIF-Overlay" "src/GIF Overlay.py"
 
     - name: Create Portable Zip
       shell: powershell
