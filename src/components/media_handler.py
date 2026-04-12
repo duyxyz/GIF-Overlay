@@ -4,11 +4,11 @@ import shutil
 import logging
 from pathlib import Path
 
-from PyQt5.QtWidgets import (
-    QApplication, QMenu, QFileDialog, QMessageBox
+from PyQt6.QtWidgets import (
+    QApplication, QMenu, QFileDialog, QMessageBox, QDialog
 )
-from PyQt5.QtGui import QMovie, QIcon, QPixmap, QImageReader
-from PyQt5.QtCore import Qt, QSize, QTimer
+from PyQt6.QtGui import QMovie, QIcon, QPixmap, QImageReader
+from PyQt6.QtCore import Qt, QSize, QTimer
 
 from components.constants import (
     CONFIG_FILE, GIF_SAVE_DIR,
@@ -113,13 +113,13 @@ class MediaMixin:
         if self.current_pixmap:
             scaled_pix = self.current_pixmap.scaled(
                 w, h, 
-                Qt.IgnoreAspectRatio, 
-                Qt.SmoothTransformation
+                Qt.AspectRatioMode.IgnoreAspectRatio, 
+                Qt.TransformationMode.SmoothTransformation
             )
             self.gif_label.setPixmap(scaled_pix)
 
     def toggle_pause_gif(self):
-        if self.movie: self.movie.setPaused(not self.movie.state() == QMovie.Paused)
+        if self.movie: self.movie.setPaused(not self.movie.state() == QMovie.MovieState.Paused)
 
     def save_gif_to_documents(self):
         if not self.current_gif_path: return
@@ -132,42 +132,42 @@ class MediaMixin:
             parent=self
         )
         
-        if dialog.exec_():
+        if dialog.exec():
             name = dialog.text_value()
             if name.strip():
                 dest = GIF_SAVE_DIR / (name + ext)
                 shutil.copy2(self.current_gif_path, dest)
                 
                 msg = QMessageBox(self)
-                msg.setWindowFlags(msg.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+                msg.setWindowFlags(msg.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
                 msg.setWindowTitle("Success")
                 msg.setText(f"Media saved successfully to:\n{dest}")
-                msg.setIcon(QMessageBox.Information)
+                msg.setIcon(QMessageBox.Icon.Information)
                 self.apply_dark_title_bar(msg)
-                msg.exec_()
+                msg.exec()
 
     def open_file_dialog(self):
         file_filter = "Media Files (*.gif *.png *.jpg *.jpeg *.bmp *.webp);;GIF Files (*.gif);;Image Files (*.png *.jpg *.jpeg *.bmp *.webp)"
         dialog = QFileDialog(self)
-        dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+        dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
         dialog.setWindowTitle("Select Media File")
         dialog.setNameFilter(file_filter)
-        dialog.setFileMode(QFileDialog.ExistingFile)
+        dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
         self.apply_dark_title_bar(dialog)
         
-        if dialog.exec_():
+        if dialog.exec():
             paths = dialog.selectedFiles()
             if paths: self.load_media(paths[0], reset_default=True)
 
     def open_saved_gif_dialog(self):
         if not GIF_SAVE_DIR.exists(): GIF_SAVE_DIR.mkdir(parents=True)
         dialog = SavedGifDialog(GIF_SAVE_DIR, self)
-        if dialog.exec_() == SavedGifDialog.Accepted:
+        if dialog.exec() == QDialog.DialogCode.Accepted:
             path = dialog.get_selected_path()
             if path: self.load_media(path, reset_default=True)
 
     def open_resize_opacity_dialog(self):
-        ResizeOpacityDialog(self).exec_()
+        ResizeOpacityDialog(self).exec()
 
     def create_menu(self):
         """Create the context menu with dynamic Lock/Unlock state"""
@@ -175,57 +175,57 @@ class MediaMixin:
         menu.setStyleSheet(DARK_MENU_STYLESHEET)
         
         if self.is_locked:
-            act_unlock = menu.addAction("Unlock Window")
+            act_unlock = menu.addAction("Unlock")
             act_unlock.setIcon(self.load_icon("unlock.png") or QIcon())
             act_unlock.triggered.connect(self.unlock_all)
             return menu
 
-        act_lock = menu.addAction("Lock Window")
+        act_lock = menu.addAction("Lock")
         act_lock.setIcon(self.load_icon("lock.png") or QIcon())
         act_lock.triggered.connect(self.toggle_lock)
         
         menu.addSeparator()
 
-        change_menu = menu.addMenu("Change Media")
+        change_menu = menu.addMenu("Open")
         change_menu.setIcon(self.load_icon("image.png") or QIcon())
         
-        act_new = change_menu.addAction("Open New Media...")
+        act_new = change_menu.addAction("Local File")
         act_new.setIcon(self.load_icon("folder.png") or QIcon())
         act_new.triggered.connect(self.open_file_dialog)
         
-        act_saved = change_menu.addAction("Open Saved Media...")
+        act_saved = change_menu.addAction("Library")
         act_saved.setIcon(self.load_icon("saved.png") or QIcon())
         act_saved.triggered.connect(self.open_saved_gif_dialog)
 
-        act_settings = menu.addAction("Adjust Size & Opacity...")
+        act_settings = menu.addAction("Settings")
         act_settings.setIcon(self.load_icon("settings.png") or QIcon())
         act_settings.triggered.connect(self.open_resize_opacity_dialog)
 
-        act_pause = menu.addAction("Pause / Play")
+        act_pause = menu.addAction("Play/Pause")
         act_pause.setIcon(self.load_icon("pause.png") or QIcon())
         act_pause.triggered.connect(self.toggle_pause_gif)
 
-        act_save = menu.addAction("Save Media...")
+        act_save = menu.addAction("Save")
         act_save.setIcon(self.load_icon("save.png") or QIcon())
         act_save.triggered.connect(self.save_gif_to_documents)
 
         close_menu = menu.addMenu("Close")
         close_menu.setIcon(self.load_icon("close.png") or QIcon())
         
-        act_quit = close_menu.addAction("Quit Application")
+        act_quit = close_menu.addAction("Quit")
         act_quit.setIcon(self.load_icon("quit.png") or QIcon())
-        act_quit.triggered.connect(QApplication.quit)
+        act_quit.triggered.connect(self.quit_app)
         
         if self.is_minimized_to_tray:
-            act_restore = close_menu.addAction("Restore to Taskbar")
+            act_restore = close_menu.addAction("Restore")
             act_restore.setIcon(self.load_icon("restore.png") or QIcon())
             act_restore.triggered.connect(self.show_normal)
         else:
-            act_min = close_menu.addAction("Minimize to Tray")
+            act_min = close_menu.addAction("Minimize")
             act_min.setIcon(self.load_icon("minimize.png") or QIcon())
             act_min.triggered.connect(self.minimize_to_tray)
 
         return menu
 
     def show_menu_at_center(self):
-        self.create_menu().exec_(self.mapToGlobal(self.rect().center()))
+        self.create_menu().exec(self.mapToGlobal(self.rect().center()))

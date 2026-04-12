@@ -1,46 +1,27 @@
-from PyQt5.QtWidgets import QPushButton
-import os
-import sys
+from PyQt6.QtWidgets import QPushButton
+from PyQt6.QtGui import QPalette, QColor
+from PyQt6.QtCore import Qt
+
 
 class ModernButton(QPushButton):
-    """Modern styled button"""
+    """
+    Nút bấm native — sử dụng hoàn toàn Fusion style.
+    Không dùng setStyleSheet để tránh vỡ render native của Qt.
+    """
     def __init__(self, text, primary=False, parent=None):
         super().__init__(text, parent)
-        if primary:
-            self.setStyleSheet("""
-                QPushButton {
-                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                                stop:0 #3D85C6, stop:1 #295F8A);
-                    color: white;
-                    border: none;
-                    border-radius: 6px;
-                    padding: 8px 16px;
-                    font-size: 13px;
-                    font-weight: 500;
-                }
-                QPushButton:hover {
-                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                                stop:0 #4A90E2, stop:1 #3D85C6);
-                }
-                QPushButton:pressed {
-                    background: #1C456B;
-                }
-            """)
-        else:
-            self.setStyleSheet("""
-                QPushButton {
-                    background: #333333;
-                    color: #EEEEEE;
-                    border: 1px solid #444444;
-                    border-radius: 6px;
-                    padding: 8px 16px;
-                    font-size: 13px;
-                }
-                QPushButton:hover {
-                    background: #444444;
-                    border: 1px solid #555555;
-                }
-                QPushButton:pressed {
-                    background: #222222;
-                }
-            """)
+        
+        # Đặt font size chuẩn một chút (không dùng CSS để giữ native engine)
+        font = self.font()
+        font.setPointSize(10)
+        default_weight = font.weight()
+        if hasattr(font, 'Weight'):
+             # PyQt5 style
+             try:
+                 font.setWeight(font.Weight.Medium if primary else font.Weight.Normal)
+             except:
+                 pass
+        self.setFont(font)
+        
+        # Bỏ qua viền xanh (focus ring) khi người dùng bấm vào nút
+        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)

@@ -22,7 +22,7 @@ GIF_SAVE_DIR = DATA_DIR / "GIF-save"
 GIF_SAVE_DIR.mkdir(parents=True, exist_ok=True)
 
 # --- UI Constants ---
-from PyQt5.QtCore import QSize
+from PyQt6.QtCore import QSize
 
 DEFAULT_MEDIA_SIZE = QSize(400, 400)
 FALLBACK_WINDOW_SIZE = QSize(300, 300)

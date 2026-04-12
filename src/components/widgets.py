@@ -1,8 +1,9 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QSlider, QHBoxLayout
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QSlider, QHBoxLayout
+from PyQt6.QtCore import Qt, pyqtSignal
+
 
 class ModernSlider(QWidget):
-    """Modern slider with label for dark mode"""
+    """Thanh trượt với nhãn — kế thừa native Fusion dark palette"""
     valueChanged = pyqtSignal(int)
     sliderReleased = pyqtSignal()
     
@@ -15,44 +16,21 @@ class ModernSlider(QWidget):
         # Header layout for label and value
         head_layout = QHBoxLayout()
         self.label = QLabel(label_text)
-        self.label.setStyleSheet("font-weight: bold; color: #BBBBBB; font-size: 13px;")
+        self.label.setStyleSheet("font-weight: bold; font-size: 13px;")
         
         self.value_label = QLabel(f"{current_val}{suffix}")
-        self.value_label.setStyleSheet("color: #3D85C6; font-weight: bold; font-size: 13px;")
+        self.value_label.setStyleSheet("font-weight: bold; font-size: 13px;")
         
         head_layout.addWidget(self.label)
         head_layout.addStretch()
         head_layout.addWidget(self.value_label)
         layout.addLayout(head_layout)
         
-        # Slider
-        self.slider = QSlider(Qt.Horizontal)
+        # Slider — native Fusion style
+        self.slider = QSlider(Qt.Orientation.Horizontal)
         self.slider.setMinimum(min_val)
         self.slider.setMaximum(max_val)
         self.slider.setValue(current_val)
-        self.slider.setStyleSheet("""
-            QSlider::groove:horizontal {
-                height: 6px;
-                background: #444444;
-                border-radius: 3px;
-            }
-            QSlider::handle:horizontal {
-                background: #3D85C6;
-                border: 1px solid #295F8A;
-                width: 16px;
-                height: 16px;
-                margin: -5px 0;
-                border-radius: 8px;
-            }
-            QSlider::handle:horizontal:hover {
-                background: #4A90E2;
-            }
-            QSlider::sub-page:horizontal {
-                background: #3D85C6;
-                border-radius: 3px;
-            }
-        """)
-        
         layout.addWidget(self.slider)
         
         self.suffix = suffix

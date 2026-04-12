@@ -3,11 +3,11 @@ import sys
 import logging
 from pathlib import Path
 
-from PyQt5.QtWidgets import (
-    QApplication, QMenu, QSystemTrayIcon, QAction
+from PyQt6.QtWidgets import (
+    QApplication, QMenu, QSystemTrayIcon, QStyle
 )
-from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import Qt
+from PyQt6.QtGui import QIcon, QAction
+from PyQt6.QtCore import Qt
 
 from components.constants import DARK_MENU_STYLESHEET, TRAY_MESSAGE_DURATION
 
@@ -25,23 +25,23 @@ class TrayMixin:
             icon_path = base_dir / "app_icon.ico"
 
         self.tray_icon = QSystemTrayIcon(self)
-        icon = QIcon(str(icon_path)) if icon_path.exists() else self.style().standardIcon(QApplication.style().SP_ComputerIcon)
+        icon = QIcon(str(icon_path)) if icon_path.exists() else self.style().standardIcon(QStyle.StandardPixmap.SP_ComputerIcon)
         self.tray_icon.setIcon(icon)
         self.setWindowIcon(icon)
 
         self.tray_menu = QMenu()
         self.tray_menu.setStyleSheet(DARK_MENU_STYLESHEET)
         
-        self.tray_show_action = QAction("Show Window", self)
+        self.tray_show_action = QAction("Show", self)
         self.tray_show_action.setIcon(self.load_icon("show.png") or QIcon())
         self.tray_show_action.triggered.connect(self.show_normal)
         
-        self.tray_lock_action = QAction("Lock Window", self)
+        self.tray_lock_action = QAction("Lock", self)
         self.tray_lock_action.triggered.connect(self.toggle_lock)
 
         quit_action = QAction("Quit", self)
         quit_action.setIcon(self.load_icon("quit.png") or QIcon())
-        quit_action.triggered.connect(QApplication.quit)
+        quit_action.triggered.connect(self.quit_app)
         
         self.tray_menu.addAction(self.tray_show_action)
         self.tray_menu.addAction(self.tray_lock_action)
@@ -59,28 +59,28 @@ class TrayMixin:
         self.tray_show_action.setVisible(should_show)
         
         if self.is_locked:
-            self.tray_lock_action.setText("Unlock Window")
+            self.tray_lock_action.setText("Unlock")
             self.tray_lock_action.setIcon(self.load_icon("unlock.png") or QIcon())
         else:
-            self.tray_lock_action.setText("Lock Window")
+            self.tray_lock_action.setText("Lock")
             self.tray_lock_action.setIcon(self.load_icon("lock.png") or QIcon())
 
     def minimize_to_tray(self):
         self.is_minimized_to_tray = True
-        self.setWindowFlags(self.windowFlags() | Qt.Tool)
+        self.setWindowFlags(self.windowFlags() | Qt.WindowType.Tool)
         self.show()
-        self.tray_icon.showMessage("GIF Overlay", "Minimized to tray.", QSystemTrayIcon.Information, TRAY_MESSAGE_DURATION)
+        self.tray_icon.showMessage("GIF Overlay", "Minimized to tray.", QSystemTrayIcon.MessageIcon.Information, TRAY_MESSAGE_DURATION)
         self.update_tray_menu()
 
     def show_normal(self):
         self.is_minimized_to_tray = False
-        self.setWindowFlags(self.windowFlags() & ~Qt.Tool)
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.Tool)
         self.show()
         self.raise_()
         self.activateWindow()
         self.update_tray_menu()
 
     def on_tray_icon_activated(self, reason):
-        if reason == QSystemTrayIcon.Trigger:
+        if reason == QSystemTrayIcon.ActivationReason.Trigger:
             if self.isVisible(): self.hide()
             else: self.show_normal()

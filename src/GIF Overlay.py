@@ -4,12 +4,12 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QApplication, QLabel, QWidget,
     QVBoxLayout, QMessageBox, QSystemTrayIcon
 )
-from PyQt5.QtGui import QMovie, QIcon, QPalette, QColor, QPixmap
-from PyQt5.QtCore import Qt, QSize, QTimer
+from PyQt6.QtGui import QMovie, QIcon, QPalette, QColor, QPixmap
+from PyQt6.QtCore import Qt, QSize, QTimer
 import ctypes
 
 from components.constants import TRAY_MESSAGE_DURATION
@@ -25,16 +25,16 @@ class GifOnTop(SettingsMixin, TrayMixin, MediaMixin, QWidget):
 
     def __init__(self):
         super().__init__()
-        self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
-        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
 
         self.gif_label = QLabel()
-        self.gif_label.setAttribute(Qt.WA_TranslucentBackground)
-        self.gif_label.setAlignment(Qt.AlignCenter)
+        self.gif_label.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.gif_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.gif_label.setStyleSheet("background: transparent;")
         self.gif_label.setMinimumSize(1, 1)
         self.layout.addWidget(self.gif_label)
@@ -88,7 +88,7 @@ class GifOnTop(SettingsMixin, TrayMixin, MediaMixin, QWidget):
         self.save_settings(self.width(), self.height(), self.windowOpacity())
         
         status = "Locked" if self.is_locked else "Unlocked"
-        self.tray_icon.showMessage("GIF Overlay", f"Window is now {status}.", QSystemTrayIcon.Information, TRAY_MESSAGE_DURATION)
+        self.tray_icon.showMessage("GIF Overlay", f"Window is now {status}.", QSystemTrayIcon.MessageIcon.Information, TRAY_MESSAGE_DURATION)
         self.update_tray_menu()
 
     def unlock_all(self):
@@ -97,58 +97,62 @@ class GifOnTop(SettingsMixin, TrayMixin, MediaMixin, QWidget):
         self.update_tray_menu()
 
     def contextMenuEvent(self, event):
-        self.create_menu().exec_(self.mapToGlobal(event.pos()))
+        self.create_menu().exec(self.mapToGlobal(event.pos()))
 
     def closeEvent(self, event):
+        if getattr(self, "_force_quit", False):
+            event.accept()
+            return
+            
         msg = QMessageBox(self)
-        msg.setWindowFlags(msg.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+        msg.setWindowFlags(msg.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
         msg.setWindowTitle("GIF Overlay")
         msg.setText("Do you want to quit the application or minimize to tray?")
-        quit_btn = msg.addButton("Quit", QMessageBox.DestructiveRole)
-        minimize_btn = msg.addButton("Minimize", QMessageBox.AcceptRole)
-        msg.addButton(QMessageBox.Cancel)
+        quit_btn = msg.addButton("Quit", QMessageBox.ButtonRole.DestructiveRole)
+        minimize_btn = msg.addButton("Minimize", QMessageBox.ButtonRole.AcceptRole)
+        msg.addButton(QMessageBox.StandardButton.Cancel)
         self.apply_dark_title_bar(msg)
-        msg.exec_()
+        msg.exec()
         
         if msg.clickedButton() == quit_btn: event.accept()
         elif msg.clickedButton() == minimize_btn: event.ignore(); self.minimize_to_tray()
         else: event.ignore()
 
     def mousePressEvent(self, event):
-        if not self.is_locked and event.button() == Qt.LeftButton:
-            self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
+        if not self.is_locked and event.button() == Qt.MouseButton.LeftButton:
+            self.drag_position = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
             event.accept()
 
     def mouseMoveEvent(self, event):
-        if not self.is_locked and event.buttons() & Qt.LeftButton and self.drag_position:
-            self.move(event.globalPos() - self.drag_position)
+        if not self.is_locked and event.buttons() & Qt.MouseButton.LeftButton and self.drag_position:
+            self.move(event.globalPosition().toPoint() - self.drag_position)
             event.accept()
+
+    def quit_app(self):
+        self._force_quit = True
+        QApplication.quit()
 
 
 if __name__ == "__main__":
-    # High DPI support
-    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
-    QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
-    
     app = QApplication(sys.argv)
     
     # Global Dark Palette for better Tray Menu support
     palette = QPalette()
-    palette.setColor(QPalette.Window, QColor(30, 30, 30))
-    palette.setColor(QPalette.WindowText, Qt.white)
-    palette.setColor(QPalette.Base, QColor(25, 25, 25))
-    palette.setColor(QPalette.AlternateBase, QColor(30, 30, 30))
-    palette.setColor(QPalette.ToolTipBase, Qt.white)
-    palette.setColor(QPalette.ToolTipText, Qt.white)
-    palette.setColor(QPalette.Text, Qt.white)
-    palette.setColor(QPalette.Button, QColor(45, 45, 45))
-    palette.setColor(QPalette.ButtonText, Qt.white)
-    palette.setColor(QPalette.BrightText, Qt.red)
-    palette.setColor(QPalette.Link, QColor(42, 130, 218))
-    palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
-    palette.setColor(QPalette.HighlightedText, Qt.black)
+    palette.setColor(QPalette.ColorRole.Window, QColor(30, 30, 30))
+    palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.white)
+    palette.setColor(QPalette.ColorRole.Base, QColor(25, 25, 25))
+    palette.setColor(QPalette.ColorRole.AlternateBase, QColor(30, 30, 30))
+    palette.setColor(QPalette.ColorRole.ToolTipBase, Qt.GlobalColor.white)
+    palette.setColor(QPalette.ColorRole.ToolTipText, Qt.GlobalColor.white)
+    palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.white)
+    palette.setColor(QPalette.ColorRole.Button, QColor(45, 45, 45))
+    palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.white)
+    palette.setColor(QPalette.ColorRole.BrightText, Qt.GlobalColor.red)
+    palette.setColor(QPalette.ColorRole.Link, QColor(42, 130, 218))
+    palette.setColor(QPalette.ColorRole.Highlight, QColor(42, 130, 218))
+    palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.black)
     app.setPalette(palette)
     
     app.setStyle('Fusion')
     window = GifOnTop()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
