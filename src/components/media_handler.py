@@ -12,7 +12,7 @@ from PyQt6.QtGui import QMovie, QIcon, QPixmap, QImageReader
 from PyQt6.QtCore import Qt, QSize, QTimer
 
 from components.constants import (
-    CONFIG_FILE, GIF_SAVE_DIR,
+    BASE_DIR, CONFIG_FILE, GIF_SAVE_DIR,
     DEFAULT_MEDIA_SIZE, FALLBACK_WINDOW_SIZE
 )
 from components.dialogs import SavedGifDialog, ResizeOpacityDialog, ModernInputDialog
@@ -24,6 +24,7 @@ class MediaMixin:
     """Quản lý tải, hiển thị và thao tác media (GIF/ảnh tĩnh)"""
 
     def load_initial_gif(self):
+        # 1. Try to load last used GIF from config
         if CONFIG_FILE.exists():
             try:
                 with open(CONFIG_FILE, "r", encoding="utf-8") as f:
@@ -34,10 +35,8 @@ class MediaMixin:
             except Exception as e:
                 logger.warning("Error loading last gif: %s", e)
         
-    def load_initial_gif(self):
-        # Đường dẫn từ src/components -> src/assets
-        base_dir = Path(getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))).parent
-        demo_gif = base_dir / "assets" / "demo1.gif"
+        # 2. Fallback to demo GIF in assets
+        demo_gif = BASE_DIR / "assets" / "demo1.gif"
         if demo_gif.exists():
             self.load_media(str(demo_gif), reset_default=True)
         else:
