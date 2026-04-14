@@ -1,111 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>GIF Overlay - Floating GIF Display Application</title>
+  <title>GIF Overlay</title>
   <link rel="icon" href="icon.png" type="image/png" />
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;family=Syne:wght@600;700;800&amp;display=swap" rel="stylesheet" />
+  
   <link rel="stylesheet" href="style.css" />
-  <script>
-    if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      document.documentElement.classList.add('dark-mode');
-    }
-  </script>
 </head>
 
 <body>
-  <header>
-    <a href="#" class="logo" aria-label="GIF Overlay Logo">
-      <img src="icon.png" alt="GIF Overlay Logo" />
-      GIF Overlay
-    </a>
-    <div class="header-actions">
-      <button class="btn-primary icon-btn" id="download-btn" title="Download Now"
-        onclick="window.location.href='https://github.com/duyxyz/GIF-Overlay/releases/'">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-          <polyline points="7 10 12 15 17 10"></polyline>
-          <line x1="12" y1="15" x2="12" y2="3"></line>
-        </svg>
-      </button>
-      <a href="https://github.com/duyxyz/GIF-Overlay" class="btn-secondary icon-btn" title="Source Code" id="source-code-link" target="_blank" rel="noopener noreferrer">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
-        </svg>
-      </a>
-      <button class="btn-secondary icon-btn" id="theme-toggle" title="Toggle Dark Mode" onclick="toggleTheme()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sun-icon" style="display: none;">
-          <circle cx="12" cy="12" r="5"></circle>
-          <line x1="12" y1="1" x2="12" y2="3"></line>
-          <line x1="12" y1="21" x2="12" y2="23"></line>
-          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-          <line x1="1" y1="12" x2="3" y2="12"></line>
-          <line x1="21" y1="12" x2="23" y2="12"></line>
-          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-        </svg>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="moon-icon">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-        </svg>
-      </button>
-      <button class="btn-secondary" id="lang-toggle" aria-label="Toggle language" onclick="toggleLanguage()">EN</button>
-    </div>
-  </header>
+  <div class="page-noise" aria-hidden="true"></div>
+  <div class="page-orb page-orb-left" aria-hidden="true"></div>
+  <div class="page-orb page-orb-right" aria-hidden="true"></div>
+
+  
 
   <main>
-    <h1 id="title">GIF Overlay - Floating GIF Display Application</h1>
-    <p class="subtitle" id="subtitle">Easily customize size, position, opacity, and many other useful features.</p>
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Windows utility • Floating motion layer</p>
+        <h1 id="title">GIF Overlay</h1>
+        <p class="subtitle" id="subtitle">Easily overlay borderless GIFs on your desktop with full customization.</p>
+        <div class="hero-actions">
+          <a class="hero-cta hero-cta-primary" href="https://github.com/duyxyz/GIF-Overlay/releases/" aria-label="Download GIF Overlay">
+            <span class="hero-cta-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+            </span>
+            <span class="hero-cta-copy">
+              <strong>Download Now</strong>
+              <small>Latest • Free</small>
+            </span>
+          </a>
+          <a class="hero-cta hero-cta-secondary" href="https://github.com/duyxyz/GIF-Overlay" target="_blank" rel="noopener noreferrer" aria-label="View source on GitHub">View Repository</a>
+        </div>
+      </div>
 
-    <!-- Phần 4 tính năng nằm cùng 1 hàng -->
-    <section class="feature-grid" aria-label="Features">
-      <div class="feature-item">
-        <strong id="feature1-title">Floating GIF Display</strong>
-        <p id="feature1-desc">Display borderless, transparent GIFs that always stay on top of other windows.</p>
-      </div>
-      <div class="feature-item">
-        <strong id="feature2-title">Easy Customization</strong>
-        <p id="feature2-desc">Change size, opacity, save position automatically, and lock the window easily.</p>
-      </div>
-      <div class="feature-item">
-        <strong id="feature3-title">CPU Saving</strong>
-        <p id="feature3-desc">Pause or play GIFs as you want to reduce system load.</p>
-      </div>
-      <div class="feature-item">
-        <strong id="feature4-title">Save & Reuse</strong>
-        <p id="feature4-desc">Save GIF images and easily reopen, minimize to system tray.</p>
+      <div class="hero-stage" aria-hidden="true">
+        <div class="stage-card stage-card-back">
+          <span class="stage-chip">Always on top</span>
+          <span class="stage-line"></span>
+          <span class="stage-line short"></span>
+        </div>
+        <div class="stage-card stage-card-front">
+          <div class="stage-window-bar">
+            <span></span><span></span><span></span>
+          </div>
+          <img src="demo1.gif" alt="Demo: Floating GIF on desktop" loading="lazy" />
+          <div class="stage-glow"></div>
+        </div>
+        <div class="stage-card stage-card-float">
+          <p>Opacity, pinning, resize, pause/play, and reuse.</p>
+        </div>
       </div>
     </section>
 
-    <section class="demo-gallery" aria-label="GIF Overlay Demo">
-      <h2>GIF Overlay in Action</h2>
-      <div class="gif-row">
-        <img src="demo1.gif" alt="Demo GIF 1" />
-        <img src="demo2.gif" alt="Demo GIF 2" />
-        <img src="demo3.gif" alt="Demo GIF 3" />
-      </div>
-    </section>
 
-    <section class="article" aria-label="About GIF Overlay">
-      <div class="article-header">
-        <h2 id="about-title">About GIF Overlay</h2>
-        <time datetime="2025-06-07" id="publish-date">Published: June 7, 2025</time>
-      </div>
-      <p id="about-p1"><strong>GIF Overlay</strong> is an application that helps you display floating GIFs on Windows
-        screen, with many useful features to personalize your work and entertainment experience.</p>
-      <p id="about-p2">The app is developed to be simple, lightweight, easy to use, and supports versatile
-        customization: resize, opacity, save position, lock window, pause/play GIF, and easy reuse.</p>
-      <p id="about-p3">With GIF Overlay, you can make your screen more lively and personal without affecting system
-        performance.</p>
-    </section>
   </main>
 
   <footer>
     &copy; 2025 GIF Overlay - All rights reserved.
   </footer>
 
-  <script src="script.js"></script>
+  <script src="script.js" defer></script>
 </body>
-
 </html>
