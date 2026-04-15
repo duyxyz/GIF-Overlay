@@ -85,31 +85,6 @@ class GifOnTop(QWidget):
         self.setWindowIcon(icon)
 
         self.tray_menu = QMenu()
-        self.tray_menu.setStyleSheet("""
-            QMenu { 
-                background: #252526; 
-                color: #EEEEEE; 
-                border: 1px solid #454545; 
-                padding: 4px; 
-            }
-            QMenu::item { 
-                padding: 6px 20px 6px 24px; 
-                border-radius: 4px;
-                margin: 1px 4px;
-            }
-            QMenu::item:selected { 
-                background: #37373D; 
-                color: #FFFFFF; 
-            }
-            QMenu::icon {
-                left: 4px;
-            }
-            QMenu::separator {
-                height: 1px;
-                background: #454545;
-                margin: 4px 8px;
-            }
-        """)
         
         self.tray_show_action = QAction("Show Window", self)
         self.tray_show_action.setIcon(self.load_icon("show.png") or QIcon())
@@ -310,31 +285,6 @@ class GifOnTop(QWidget):
     def create_menu(self):
         """Create the context menu with dynamic Lock/Unlock state"""
         menu = QMenu(self)
-        menu.setStyleSheet("""
-            QMenu { 
-                background: #252526; 
-                color: #EEEEEE; 
-                border: 1px solid #454545; 
-                padding: 4px; 
-            }
-            QMenu::item { 
-                padding: 6px 20px 6px 24px; 
-                border-radius: 4px;
-                margin: 1px 4px;
-            }
-            QMenu::item:selected { 
-                background: #37373D; 
-                color: #FFFFFF; 
-            }
-            QMenu::icon {
-                left: 4px;
-            }
-            QMenu::separator {
-                height: 1px;
-                background: #454545;
-                margin: 4px 8px;
-            }
-        """)
         
         if self.is_locked:
             act_unlock = menu.addAction("Unlock Window")
@@ -503,26 +453,8 @@ if __name__ == "__main__":
     # High DPI support
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
     QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
-    
+
     app = QApplication(sys.argv)
-    
-    # Global Dark Palette for better Tray Menu support
-    palette = QPalette()
-    palette.setColor(QPalette.Window, QColor(30, 30, 30))
-    palette.setColor(QPalette.WindowText, Qt.white)
-    palette.setColor(QPalette.Base, QColor(25, 25, 25))
-    palette.setColor(QPalette.AlternateBase, QColor(30, 30, 30))
-    palette.setColor(QPalette.ToolTipBase, Qt.white)
-    palette.setColor(QPalette.ToolTipText, Qt.white)
-    palette.setColor(QPalette.Text, Qt.white)
-    palette.setColor(QPalette.Button, QColor(45, 45, 45))
-    palette.setColor(QPalette.ButtonText, Qt.white)
-    palette.setColor(QPalette.BrightText, Qt.red)
-    palette.setColor(QPalette.Link, QColor(42, 130, 218))
-    palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
-    palette.setColor(QPalette.HighlightedText, Qt.black)
-    app.setPalette(palette)
-    
-    app.setStyle('Fusion')
+    app.setStyle("windowsvista")  # Native Windows renderer, no custom palette
     window = GifOnTop()
     sys.exit(app.exec_())

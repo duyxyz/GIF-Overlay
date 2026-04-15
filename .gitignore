@@ -31,3 +31,5 @@ settings.txt
 saved_media_settings/
 saved_gifs/
 data/
+.agents/
+skills-lock.json
