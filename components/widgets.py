@@ -140,9 +140,37 @@ class MenuButtonAction(QWidgetAction):
         
         btn = QPushButton(self.label_text)
         btn.setStyleSheet("font-weight: 500; padding: 4px;")
-        btn.clicked.connect(lambda: (self.clicked.emit(), parent.close()))
+        btn.clicked.connect(lambda: self.clicked.emit())
         
         layout.addWidget(btn)
+        return widget
+
+class MenuDoubleButtonAction(QWidgetAction):
+    """Custom action to embed two buttons into a single row in a QMenu"""
+    clicked1 = pyqtSignal()
+    clicked2 = pyqtSignal()
+
+    def __init__(self, label1, label2, parent=None):
+        super().__init__(parent)
+        self.l1 = label1
+        self.l2 = label2
+
+    def createWidget(self, parent):
+        widget = QWidget(parent)
+        layout = QHBoxLayout(widget)
+        layout.setContentsMargins(15, 6, 15, 6)
+        layout.setSpacing(10)
+        
+        btn1 = QPushButton(self.l1)
+        btn1.setStyleSheet("font-weight: 500; padding: 4px;")
+        btn1.clicked.connect(self.clicked1.emit)
+        
+        btn2 = QPushButton(self.l2)
+        btn2.setStyleSheet("font-weight: 500; padding: 4px;")
+        btn2.clicked.connect(self.clicked2.emit)
+        
+        layout.addWidget(btn1)
+        layout.addWidget(btn2)
         return widget
 
 class MenuSeparatorAction(QWidgetAction):

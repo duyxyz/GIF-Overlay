@@ -6,8 +6,7 @@ from typing import Optional
 
 from PyQt5.QtWidgets import (
     QApplication, QLabel, QFileDialog, QWidget,
-    QVBoxLayout, QMenu, QMessageBox,
-    QSystemTrayIcon, QAction
+    QVBoxLayout, QMenu, QMessageBox, QAction
 )
 from PyQt5.QtGui import QMovie, QIcon, QPalette, QColor, QPixmap, QImageReader, QPainter
 from PyQt5.QtCore import Qt, QSize, QTimer
@@ -19,9 +18,45 @@ from components.constants import (
     TRAY_MSG_TIMEOUT, TRAY_MSG_TIMEOUT_LONG, WELCOME_DELAY_MS,
     MENU_OPEN_DELAY_MS, SLIDER_SCALE_RANGE, SLIDER_SIZE_RANGE, SLIDER_OPACITY_RANGE
 )
-from components.dialogs import SavedGifDialog, ModernInputDialog
-from components.widgets import MenuSliderAction, MenuCheckboxAction, MenuButtonAction, MenuSeparatorAction
+from components.widgets import MenuSliderAction, MenuCheckboxAction, MenuButtonAction, MenuSeparatorAction, MenuDoubleButtonAction
 from components.settings_manager import SettingsManager
+
+class TransformableLabel(QLabel):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.angle = 0
+        self.flip_h = False
+        self.flip_v = False
+
+    def paintEvent(self, event):
+        # Determine what to draw
+        pix = self.pixmap()
+        if not pix and self.movie():
+            pix = self.movie().currentPixmap()
+        
+        if not pix:
+            return super().paintEvent(event)
+            
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.SmoothPixmapTransform)
+        
+        # Move to center
+        painter.translate(self.width() / 2, self.height() / 2)
+        
+        # Apply transforms
+        painter.rotate(self.angle)
+        sx = -1 if self.flip_h else 1
+        sy = -1 if self.flip_v else 1
+        painter.scale(sx, sy)
+        
+        # Determine draw area - if rotated 90/270, we swap W/H
+        if self.angle % 180 != 0:
+            draw_w, draw_h = self.height(), self.width()
+        else:
+            draw_w, draw_h = self.width(), self.height()
+            
+        painter.drawPixmap(int(-draw_w / 2), int(-draw_h / 2), draw_w, draw_h, pix)
+        painter.end()
 
 class GifOnTop(QWidget):
     def __init__(self):
@@ -33,7 +68,7 @@ class GifOnTop(QWidget):
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
 
-        self.gif_label = QLabel()
+        self.gif_label = TransformableLabel()
         self.gif_label.setAttribute(Qt.WA_TranslucentBackground)
         self.gif_label.setAlignment(Qt.AlignCenter)
         self.gif_label.setStyleSheet("background: transparent;")
@@ -47,10 +82,14 @@ class GifOnTop(QWidget):
 
         self.drag_position = None
         self.is_locked = False
-        self.is_minimized_to_tray = False
         self.lock_aspect_ratio = True
         self.is_updating_menu = False # Flag for slider syncing
         self.original_size_cache = {} # Cache for media sizes
+
+        # Orientation state
+        self.rotation_angle = 0
+        self.flip_h = False
+        self.flip_v = False
         
         # Debounce timer for save_settings
         self._save_timer = QTimer(self)
@@ -59,7 +98,8 @@ class GifOnTop(QWidget):
         self._save_timer.timeout.connect(self._flush_settings)
         self._pending_settings = None
 
-        self.setup_tray_icon()
+        self._pending_settings = None
+
         self.load_initial_gif()
         self.show()
         
@@ -97,51 +137,6 @@ class GifOnTop(QWidget):
     def setup_tray_icon(self):
         """Setup system tray icon with dark menu"""
         icon_path = BASE_DIR / "assets" / "app_icon.ico"
-        if not icon_path.exists():
-            icon_path = BASE_DIR / "app_icon.ico"
-
-        self.tray_icon = QSystemTrayIcon(self)
-        icon = QIcon(str(icon_path)) if icon_path.exists() else self.style().standardIcon(QApplication.style().SP_ComputerIcon)
-        self.tray_icon.setIcon(icon)
-        self.setWindowIcon(icon)
-
-        self.tray_menu = QMenu()
-        
-        self.tray_show_action = QAction("Show Window", self)
-        self.tray_show_action.setIcon(self.load_icon("show.png") or QIcon())
-        self.tray_show_action.triggered.connect(self.show_normal)
-        
-        self.tray_lock_action = QAction("Lock Window", self)
-        self.tray_lock_action.triggered.connect(self.toggle_lock)
-
-        quit_action = QAction("Quit", self)
-        quit_action.setIcon(self.load_icon("quit.png") or QIcon())
-        quit_action.triggered.connect(QApplication.quit)
-        
-        self.tray_menu.addAction(self.tray_show_action)
-        self.tray_menu.addAction(self.tray_lock_action)
-        self.tray_menu.addSeparator()
-        self.tray_menu.addAction(quit_action)
-        
-        self.tray_menu.aboutToShow.connect(self.update_tray_menu)
-        self.tray_icon.setContextMenu(self.tray_menu)
-        self.tray_icon.activated.connect(self.on_tray_icon_activated)
-        self.tray_icon.show()
-
-    def update_tray_menu(self):
-        """Dynamically update tray menu states before showing"""
-        # "Show Window" should only be visible if it's hidden or minimized to tray
-        should_show = not self.isVisible() or self.is_minimized_to_tray
-        self.tray_show_action.setVisible(should_show)
-        
-        # Update lock action text and icon
-        if self.is_locked:
-            self.tray_lock_action.setText("Unlock Window")
-            self.tray_lock_action.setIcon(self.load_icon("unlock.png") or QIcon())
-        else:
-            self.tray_lock_action.setText("Lock Window")
-            self.tray_lock_action.setIcon(self.load_icon("lock.png") or QIcon())
-
 
     def load_initial_gif(self):
         # 1. Mở file từ dòng lệnh (ví dụ: Open With / Double Click trong Windows)
@@ -181,8 +176,12 @@ class GifOnTop(QWidget):
         return SettingsManager.load(self.current_gif_path)
 
     def load_media(self, path):
-        if not os.path.exists(path): return
-        
+        # Reset orientation
+        self.rotation_angle = 0
+        self.flip_h = False
+        self.flip_v = False
+        self.update_label_transform()
+
         # Clean up previous media
         if self.movie:
             self.movie.stop()
@@ -276,20 +275,46 @@ class GifOnTop(QWidget):
         """Handle media scaling when window resizes"""
         super().resizeEvent(event)
         w, h = self.width(), self.height()
+        
+        # If rotated 90/270, the media dimensions are swapped relative to window
+        media_w, media_h = (h, w) if self.rotation_angle % 180 != 0 else (w, h)
+        
         if self.movie:
-            self.movie.setScaledSize(QSize(w, h))
+            self.movie.setScaledSize(QSize(media_w, media_h))
         elif self.current_pixmap:
-            self.update_static_image_size(w, h)
+            self.update_static_image_size(media_w, media_h)
+        self.update_label_transform()
+
+    def update_label_transform(self):
+        """Sync orientation state to the transformable label"""
+        if hasattr(self, 'gif_label'):
+            self.gif_label.angle = self.rotation_angle
+            self.gif_label.flip_h = self.flip_h
+            self.gif_label.flip_v = self.flip_v
+            self.gif_label.update()
+
+    def rotate_right(self):
+        self.rotation_angle = (self.rotation_angle + 90) % 360
+        self.resize(self.height(), self.width())
+        self.update_label_transform()
+
+    def rotate_left(self):
+        self.rotation_angle = (self.rotation_angle - 90) % 360
+        self.resize(self.height(), self.width())
+        self.update_label_transform()
+
+    def toggle_flip_h(self):
+        self.flip_h = not self.flip_h
+        self.update_label_transform()
+
+    def toggle_flip_v(self):
+        self.flip_v = not self.flip_v
+        self.update_label_transform()
 
     def toggle_lock(self, _=None):
         """Toggle position and resize lock"""
         self.is_locked = not self.is_locked
         self.save_settings(self.width(), self.height(), self.windowOpacity())
-        
-        # Update tray icon message
-        status = "Locked" if self.is_locked else "Unlocked"
-        self.tray_icon.showMessage("GIF Overlay", f"Window is now {status}.", QSystemTrayIcon.Information, TRAY_MSG_TIMEOUT)
-        self.update_tray_menu() # Immediate update
 
     def update_static_image_size(self, w: int, h: int):
         """Scale and update static pixmap with high quality"""
@@ -374,19 +399,12 @@ class GifOnTop(QWidget):
         
         menu.addSeparator()
 
-        change_menu = menu.addMenu("Change Media")
-        change_menu.setIcon(self.load_icon("image.png") or QIcon())
-        
-        act_new = change_menu.addAction("Open New Media...")
-        act_new.setIcon(self.load_icon("folder.png") or QIcon())
-        act_new.triggered.connect(self.open_file_dialog)
-        
-        act_saved = change_menu.addAction("Open Saved Media...")
-        act_saved.setIcon(self.load_icon("saved.png") or QIcon())
-        act_saved.triggered.connect(self.open_saved_gif_dialog)
+        act_open = menu.addAction("Change GIF...")
+        act_open.setIcon(self.load_icon("image.png") or QIcon())
+        act_open.triggered.connect(self.open_file_dialog)
 
         # Replace dialog with submenu sliders
-        adj_menu = menu.addMenu("Size & Opacity")
+        adj_menu = menu.addMenu("Settings")
         adj_menu.setIcon(self.load_icon("settings.png") or QIcon())
         
         # Scale Slider
@@ -415,6 +433,21 @@ class GifOnTop(QWidget):
         adj_menu.addAction(self.m_opacity_act)
         
         adj_menu.addAction(MenuSeparatorAction(self))
+
+        # Orientation Buttons (Double buttons per row)
+        self.btn_rot = MenuDoubleButtonAction("Rotate Left", "Rotate Right", self)
+        self.btn_rot.clicked1.connect(self.rotate_left)
+        self.btn_rot.clicked2.connect(self.rotate_right)
+        adj_menu.addAction(self.btn_rot)
+        
+        adj_menu.addAction(MenuSeparatorAction(self))
+        
+        self.btn_flip = MenuDoubleButtonAction("Flip Horizontal", "Flip Vertical", self)
+        self.btn_flip.clicked1.connect(self.toggle_flip_h)
+        self.btn_flip.clicked2.connect(self.toggle_flip_v)
+        adj_menu.addAction(self.btn_flip)
+
+        adj_menu.addAction(MenuSeparatorAction(self))
         
         # Lock Aspect Ratio Action (Tick box style)
         self.m_lock_act = MenuCheckboxAction("Lock Aspect Ratio", self.lock_aspect_ratio, self)
@@ -432,32 +465,16 @@ class GifOnTop(QWidget):
         act_pause.setIcon(self.load_icon("pause.png") or QIcon())
         act_pause.triggered.connect(self.toggle_pause_gif)
 
-        act_save = menu.addAction("Save Media...")
-        act_save.setIcon(self.load_icon("save.png") or QIcon())
-        act_save.triggered.connect(self.save_gif_to_documents)
-
-        close_menu = menu.addMenu("Close")
-        close_menu.setIcon(self.load_icon("close.png") or QIcon())
-        
-        act_quit = close_menu.addAction("Quit Application")
+        menu.addSeparator()
+        act_quit = menu.addAction("Quit Application")
         act_quit.setIcon(self.load_icon("quit.png") or QIcon())
         act_quit.triggered.connect(QApplication.quit)
-        
-        if self.is_minimized_to_tray:
-            act_restore = close_menu.addAction("Restore to Taskbar")
-            act_restore.setIcon(self.load_icon("restore.png") or QIcon())
-            act_restore.triggered.connect(self.show_normal)
-        else:
-            act_min = close_menu.addAction("Minimize to Tray")
-            act_min.setIcon(self.load_icon("minimize.png") or QIcon())
-            act_min.triggered.connect(self.minimize_to_tray)
 
         return menu
 
     def unlock_all(self):
         self.is_locked = False
         self.save_settings(self.width(), self.height(), self.windowOpacity())
-        self.update_tray_menu() # Immediate update
 
     def open_file_dialog(self):
         filter = "Media Files (*.gif *.png *.jpg *.jpeg *.bmp *.webp);;GIF Files (*.gif);;Image Files (*.png *.jpg *.jpeg *.bmp *.webp)"
@@ -472,58 +489,8 @@ class GifOnTop(QWidget):
             paths = dialog.selectedFiles()
             if paths: self.load_media(paths[0])
 
-    def open_saved_gif_dialog(self):
-        if not GIF_SAVE_DIR.exists(): GIF_SAVE_DIR.mkdir(parents=True)
-        dialog = SavedGifDialog(GIF_SAVE_DIR, self)
-        if dialog.exec_() == SavedGifDialog.Accepted:
-            path = dialog.get_selected_path()
-            if path: self.load_media(path)
-
-
     def toggle_pause_gif(self):
         if self.movie: self.movie.setPaused(not self.movie.state() == QMovie.Paused)
-
-    def save_gif_to_documents(self):
-        if not self.current_gif_path: return
-        ext = Path(self.current_gif_path).suffix
-        
-        # Use custom ModernInputDialog for premium look and bigger size
-        dialog = ModernInputDialog(
-            "Save Media", 
-            "Enter filename for your media:", 
-            initial_value=Path(self.current_gif_path).stem, 
-            parent=self
-        )
-        
-        if dialog.exec_():
-            name = dialog.text_value()
-            if name.strip():
-                dest = GIF_SAVE_DIR / (name + ext)
-                shutil.copy2(self.current_gif_path, dest)
-                
-                # Use QMessageBox instance for dark title bar and remove help button
-                msg = QMessageBox(self)
-                msg.setWindowFlags(msg.windowFlags() & ~Qt.WindowContextHelpButtonHint)
-                msg.setWindowTitle("Success")
-                msg.setText(f"Media saved successfully to:\n{dest}")
-                msg.setIcon(QMessageBox.Information)
-                self.apply_dark_title_bar(msg)
-                msg.exec_()
-
-    def minimize_to_tray(self):
-        self.is_minimized_to_tray = True
-        self.setWindowFlags(self.windowFlags() | Qt.Tool)
-        self.show()
-        self.tray_icon.showMessage("GIF Overlay", "Minimized to tray.", QSystemTrayIcon.Information, TRAY_MSG_TIMEOUT_LONG)
-        self.update_tray_menu()
-
-    def show_normal(self):
-        self.is_minimized_to_tray = False
-        self.setWindowFlags(self.windowFlags() & ~Qt.Tool)
-        self.show()
-        self.raise_()
-        self.activateWindow()
-        self.update_tray_menu()
 
     def contextMenuEvent(self, event):
         self.create_menu().exec_(self.mapToGlobal(event.pos()))
@@ -532,24 +499,8 @@ class GifOnTop(QWidget):
         self.create_menu().exec_(self.mapToGlobal(self.rect().center()))
 
     def closeEvent(self, event):
-        msg = QMessageBox(self)
-        msg.setWindowFlags(msg.windowFlags() & ~Qt.WindowContextHelpButtonHint)
-        msg.setWindowTitle("GIF Overlay")
-        msg.setText("Do you want to quit the application or minimize to tray?")
-        q = msg.addButton("Quit", QMessageBox.DestructiveRole)
-        m = msg.addButton("Minimize", QMessageBox.AcceptRole)
-        msg.addButton(QMessageBox.Cancel)
-        self.apply_dark_title_bar(msg)
-        msg.exec_()
-        
-        if msg.clickedButton() == q: event.accept()
-        elif msg.clickedButton() == m: event.ignore(); self.minimize_to_tray()
-        else: event.ignore()
-
-    def on_tray_icon_activated(self, reason):
-        if reason == QSystemTrayIcon.Trigger:
-            if self.isVisible(): self.hide()
-            else: self.show_normal()
+        # Simply accept the event to close normally like a standard app
+        event.accept()
 
     def mousePressEvent(self, event):
         if not self.is_locked and event.button() == Qt.LeftButton:
