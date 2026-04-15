@@ -18,6 +18,8 @@ public partial class App : Application
             } catch { }
             MessageBox.Show(ex.Exception.Message, "Fatal Error");
         };
+
+        var mainWindow = new MainWindow(e.Args);
+        mainWindow.Show();
     }
 }
-

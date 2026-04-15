@@ -32,7 +32,7 @@ namespace GifOverlay.Wpf
             } 
         }
 
-        public MainWindow()
+        public MainWindow(string[] args = null)
         {
             InitializeComponent();
             _settings = SettingsService.Load();
@@ -57,10 +57,17 @@ namespace GifOverlay.Wpf
             this.Left = (SystemParameters.PrimaryScreenWidth - this.Width) / 2;
             this.Top = (SystemParameters.PrimaryScreenHeight - this.Height) / 2;
 
-            if (!string.IsNullOrEmpty(_settings.LastGifPath) && System.IO.File.Exists(_settings.LastGifPath))
+            // Ưu tiên 1: File được truyền qua dòng lệnh (Open With)
+            if (args != null && args.Length > 0 && System.IO.File.Exists(args[0]))
+            {
+                LoadGif(args[0]);
+            }
+            // Ưu tiên 2: File cuối cùng đã mở
+            else if (!string.IsNullOrEmpty(_settings.LastGifPath) && System.IO.File.Exists(_settings.LastGifPath))
             {
                 LoadGif(_settings.LastGifPath);
             }
+            // Ưu tiên 3: Demo mặc định
             else
             {
                 string demoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "assets", "demo1.gif");
