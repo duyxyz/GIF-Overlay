@@ -144,11 +144,18 @@ class GifOnTop(QWidget):
 
 
     def load_initial_gif(self):
+        # 1. Mở file từ dòng lệnh (ví dụ: Open With / Double Click trong Windows)
+        if len(sys.argv) > 1 and os.path.exists(sys.argv[1]):
+            self.load_media(sys.argv[1])
+            return
+
+        # 2. Khôi phục lại ảnh cuối cùng được mở trong phiên làm việc trước
         last_path = SettingsManager.load_last_path()
         if last_path and os.path.exists(last_path):
             self.load_media(last_path)
             return
         
+        # 3. Load ảnh demo mặt định nếu không có dữ liệu
         demo_gif = BASE_DIR / "demo1.gif"
         if demo_gif.exists():
             self.load_media(str(demo_gif))
