@@ -11,6 +11,15 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QMovie, QIcon, QPalette, QColor, QPixmap, QImageReader, QPainter
 from PyQt5.QtCore import Qt, QSize, QTimer
 import ctypes
+import logging
+import time
+
+# Cấu hình logging theo chuẩn Skill
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - [%(name)s] - %(message)s'
+)
+logger = logging.getLogger("GIF-Overlay")
 
 # Import local components
 from components.constants import (
@@ -30,13 +39,26 @@ class TransformableLabel(QLabel):
 
     def paintEvent(self, event):
         # Determine what to draw
-        pix = self.pixmap()
-        if not pix and self.movie():
-            pix = self.movie().currentPixmap()
-        
-        if not pix:
+        movie = self.movie()
+        if not movie:
             return super().paintEvent(event)
             
+        pix = movie.currentPixmap()
+        if not pix:
+            return
+            
+        # Fast path: No transformations
+        if self.angle == 0 and not self.flip_h and not self.flip_v:
+            # If no rotation/flip, let the default label painting handle it if possible
+            # but since we want Precise control over scaling quality, we still use QPainter
+            # or just call super().paintEvent if movie was set correctly.
+            # However, TransformableLabel is mixed. Let's optimize the Painter setup.
+            painter = QPainter(self)
+            painter.setRenderHint(QPainter.SmoothPixmapTransform)
+            painter.drawPixmap(self.rect(), pix)
+            painter.end()
+            return
+
         painter = QPainter(self)
         painter.setRenderHint(QPainter.SmoothPixmapTransform)
         
@@ -80,10 +102,10 @@ class GifOnTop(QWidget):
         self.current_gif_path: Optional[str] = None
         self.original_size: Optional[QSize] = None
 
-        self.drag_position = None
         self.is_locked = False
         self.lock_aspect_ratio = True
         self.is_updating_menu = False # Flag for slider syncing
+        self.icon_cache = {} # Cache for tinted icons
         self.original_size_cache = {} # Cache for media sizes
 
         # Orientation state
@@ -101,6 +123,10 @@ class GifOnTop(QWidget):
         self._pending_settings = None
 
         self.load_initial_gif()
+        
+        # Pre-create context menu to avoid lag on right click
+        self.init_menu()
+        
         self.show()
         
         if not self.current_gif_path:
@@ -118,21 +144,30 @@ class GifOnTop(QWidget):
             pass  # Dark mode không khả dụng trên hệ thống này
 
     def load_icon(self, icon_name):
-        """Load icon from assets folder and tint it for visibility"""
+        """Load icon from assets folder and tint it for visibility (cached)"""
+        start_time = time.perf_counter()
+        if icon_name in self.icon_cache:
+            return self.icon_cache[icon_name]
+            
         icon_path = BASE_DIR / "assets" / icon_name
         if not icon_path.exists():
+            logger.warning(f"Icon not found: {icon_path}")
             return QIcon()
             
         pixmap = QPixmap(str(icon_path))
         
         # Tint white icons to dark grey for visibility on light menus
-        # This fills the opaque parts of the icon with the specified color
         painter = QPainter(pixmap)
         painter.setCompositionMode(QPainter.CompositionMode_SourceIn)
         painter.fillRect(pixmap.rect(), QColor("#2D2D2D")) 
         painter.end()
         
-        return QIcon(pixmap)
+        icon = QIcon(pixmap)
+        self.icon_cache[icon_name] = icon
+        
+        elapsed = (time.perf_counter() - start_time) * 1000
+        logger.debug(f"Loaded and tinted icon '{icon_name}' in {elapsed:.2f}ms")
+        return icon
 
     def setup_tray_icon(self):
         """Setup system tray icon with dark menu"""
@@ -176,7 +211,9 @@ class GifOnTop(QWidget):
         return SettingsManager.load(self.current_gif_path)
 
     def load_media(self, path):
-        # Reset orientation
+        """Tải và hiển thị file GIF với log hiệu năng (Skill Standards)"""
+        logger.info(f"Loading media: {path}")
+        start_time = time.perf_counter()
         self.rotation_angle = 0
         self.flip_h = False
         self.flip_v = False
@@ -188,33 +225,35 @@ class GifOnTop(QWidget):
             self.movie = None
         self.gif_label.clear()
         try:
-            # First determine media type
+            # Determine media type (GIF only)
             temp_movie = QMovie(path)
-            if temp_movie.isValid():
-                self.movie = temp_movie
-                self.current_pixmap = None  # Reset pixmap khi load GIF
-                
-                # Xác định kích thước gốc cho GIF
+            if not temp_movie.isValid():
+                # Try reading header if QMovie fails initially
                 reader = QImageReader(path)
-                detected_size = QSize(0, 0)
-                if reader.canRead():
-                    detected_size = reader.size()
-                if not detected_size.isValid() or detected_size.width() <= 0:
-                    self.movie.jumpToFrame(0)
-                    detected_size = self.movie.frameRect().size()
-                if not detected_size.isValid() or detected_size.width() <= 0:
-                    detected_size = self.original_size_cache.get(path, QSize(*DEFAULT_FALLBACK_SIZE))
-                
-                self.original_size = detected_size
-            else:
-                self.movie = None
-                self.current_pixmap = QPixmap(path)
-                if self.current_pixmap.isNull():
-                    QMessageBox.warning(self, "Error", "Unsupported file format.")
+                if reader.format().lower() != b'gif':
+                    logger.error(f"Unsupported format tried to load: {reader.format()}")
+                    QMessageBox.warning(self, "Error", "Only GIF files are supported.")
                     return
-                # Lấy kích thước gốc trực tiếp từ Pixmap để tránh lỗi EXIF xoay ảnh khác với ImageReader
-                self.original_size = self.current_pixmap.size()
+                # If it's a GIF but QMovie complained, it might be corrupted or specific issue
+                if not temp_movie.isValid():
+                    logger.error(f"Corrupted GIF: {path}")
+                    QMessageBox.warning(self, "Error", "Invalid or corrupted GIF file.")
+                    return
 
+            self.movie = temp_movie
+            
+            # Xác định kích thước gốc cho GIF
+            reader = QImageReader(path)
+            detected_size = QSize(0, 0)
+            if reader.canRead():
+                detected_size = reader.size()
+            if not detected_size.isValid() or detected_size.width() <= 0:
+                self.movie.jumpToFrame(0)
+                detected_size = self.movie.frameRect().size()
+            if not detected_size.isValid() or detected_size.width() <= 0:
+                detected_size = self.original_size_cache.get(path, QSize(*DEFAULT_FALLBACK_SIZE))
+            
+            self.original_size = detected_size
             self.original_size_cache[path] = self.original_size
 
             # Bù trừ High DPI (ngăn Windows tự phóng to ảnh pixel vật lý sang pixel logic)
@@ -256,19 +295,16 @@ class GifOnTop(QWidget):
                 self.movie.setScaledSize(target_size)
                 self.gif_label.setMovie(self.movie)
                 self.movie.start()
-            elif self.current_pixmap:
-                scaled_pix = self.current_pixmap.scaled(
-                    target_size.width(), target_size.height(),
-                    Qt.IgnoreAspectRatio, 
-                    Qt.SmoothTransformation
-                )
-                self.gif_label.setPixmap(scaled_pix)
 
             # Cập nhật đường dẫn hiện tại và lưu lại
             self.current_gif_path = path
             SettingsManager.save_last_path(path)
             
+            elapsed = (time.perf_counter() - start_time) * 1000
+            logger.info(f"Media loaded in {elapsed:.2f}ms")
+            
         except Exception as e:
+            logger.exception("Failed to load media")
             QMessageBox.critical(self, "Error", f"Failed to load media:\n{str(e)}")
 
     def resizeEvent(self, event):
@@ -281,9 +317,12 @@ class GifOnTop(QWidget):
         
         if self.movie:
             self.movie.setScaledSize(QSize(media_w, media_h))
-        elif self.current_pixmap:
-            self.update_static_image_size(media_w, media_h)
         self.update_label_transform()
+
+    def toggle_lock(self, _=None):
+        """Toggle position and resize lock"""
+        self.is_locked = not self.is_locked
+        self.save_settings(self.width(), self.height(), self.windowOpacity())
 
     def update_label_transform(self):
         """Sync orientation state to the transformable label"""
@@ -310,21 +349,6 @@ class GifOnTop(QWidget):
     def toggle_flip_v(self):
         self.flip_v = not self.flip_v
         self.update_label_transform()
-
-    def toggle_lock(self, _=None):
-        """Toggle position and resize lock"""
-        self.is_locked = not self.is_locked
-        self.save_settings(self.width(), self.height(), self.windowOpacity())
-
-    def update_static_image_size(self, w: int, h: int):
-        """Scale and update static pixmap with high quality"""
-        if self.current_pixmap:
-            scaled_pix = self.current_pixmap.scaled(
-                w, h, 
-                Qt.IgnoreAspectRatio, 
-                Qt.SmoothTransformation
-            )
-            self.gif_label.setPixmap(scaled_pix)
 
     def update_scale_from_menu(self, value):
         if self.is_updating_menu or not self.original_size: return
@@ -383,101 +407,112 @@ class GifOnTop(QWidget):
     def toggle_aspect_ratio(self, checked):
         self.lock_aspect_ratio = checked
 
-    def create_menu(self):
-        """Create the context menu with dynamic Lock/Unlock state"""
-        menu = QMenu(self)
+    def init_menu(self):
+        """Khởi tạo menu cố định để tránh lag (Skill: Performance Profiling)"""
+        start_time = time.perf_counter()
+        self._main_menu = QMenu(self)
+        self._settings_menu = QMenu("Settings", self)
+        self._settings_menu.setIcon(self.load_icon("settings.png") or QIcon())
         
-        if self.is_locked:
-            act_unlock = menu.addAction("Unlock Window")
-            act_unlock.setIcon(self.load_icon("unlock.png") or QIcon())
-            act_unlock.triggered.connect(self.unlock_all)
-            return menu
-
-        act_lock = menu.addAction("Lock Window")
-        act_lock.setIcon(self.load_icon("lock.png") or QIcon())
-        act_lock.triggered.connect(self.toggle_lock)
+        # Persistent Actions
+        self.act_lock = QAction("Lock Window", self)
+        self.act_lock.setIcon(self.load_icon("lock.png") or QIcon())
+        self.act_lock.triggered.connect(self.toggle_lock)
         
-        menu.addSeparator()
-
-        act_open = menu.addAction("Change GIF...")
-        act_open.setIcon(self.load_icon("image.png") or QIcon())
-        act_open.triggered.connect(self.open_file_dialog)
-
-        # Replace dialog with submenu sliders
-        adj_menu = menu.addMenu("Settings")
-        adj_menu.setIcon(self.load_icon("settings.png") or QIcon())
+        self.act_unlock = QAction("Unlock Window", self)
+        self.act_unlock.setIcon(self.load_icon("unlock.png") or QIcon())
+        self.act_unlock.triggered.connect(self.unlock_all)
         
-        # Scale Slider
-        curr_scale = 100
-        if self.original_size and self.original_size.width() > 0:
-            curr_scale = int(self.width() / self.original_size.width() * 100)
+        self.act_open = QAction("Change GIF...", self)
+        self.act_open.setIcon(self.load_icon("image.png") or QIcon())
+        self.act_open.triggered.connect(self.open_file_dialog)
         
-        self.m_scale_act = MenuSliderAction("Scale", *SLIDER_SCALE_RANGE, curr_scale, "%", self)
+        self.act_pause = QAction("Pause / Play", self)
+        self.act_pause.setIcon(self.load_icon("pause.png") or QIcon())
+        self.act_pause.triggered.connect(self.toggle_pause_gif)
+        
+        self.act_quit = QAction("Quit Application", self)
+        self.act_quit.setIcon(self.load_icon("quit.png") or QIcon())
+        self.act_quit.triggered.connect(QApplication.quit)
+        
+        # Slider Actions (The heavy ones)
+        self.m_scale_act = MenuSliderAction("Scale", *SLIDER_SCALE_RANGE, 100, "%", self)
         self.m_scale_act.valueChanged.connect(self.update_scale_from_menu)
-        adj_menu.addAction(self.m_scale_act)
         
-        # Width Slider
-        self.m_width_act = MenuSliderAction("Width", *SLIDER_SIZE_RANGE, self.width(), "px", self)
+        self.m_width_act = MenuSliderAction("Width", *SLIDER_SIZE_RANGE, 300, "px", self)
         self.m_width_act.valueChanged.connect(self.update_width_from_menu)
-        adj_menu.addAction(self.m_width_act)
         
-        # Height Slider
-        self.m_height_act = MenuSliderAction("Height", *SLIDER_SIZE_RANGE, self.height(), "px", self)
+        self.m_height_act = MenuSliderAction("Height", *SLIDER_SIZE_RANGE, 300, "px", self)
         self.m_height_act.valueChanged.connect(self.update_height_from_menu)
-        adj_menu.addAction(self.m_height_act)
-
-        # Opacity Slider
-        curr_opacity = int(self.windowOpacity() * 100)
-        self.m_opacity_act = MenuSliderAction("Opacity", *SLIDER_OPACITY_RANGE, curr_opacity, "%", self)
-        self.m_opacity_act.valueChanged.connect(self.update_opacity_from_menu)
-        adj_menu.addAction(self.m_opacity_act)
         
-        adj_menu.addAction(MenuSeparatorAction(self))
-
-        # Orientation Buttons (Double buttons per row)
+        self.m_opacity_act = MenuSliderAction("Opacity", *SLIDER_OPACITY_RANGE, 100, "%", self)
+        self.m_opacity_act.valueChanged.connect(self.update_opacity_from_menu)
+        
+        self.m_lock_aspect = MenuCheckboxAction("Lock Aspect Ratio", self.lock_aspect_ratio, self)
+        self.m_lock_aspect.toggled.connect(self.toggle_aspect_ratio)
+        
         self.btn_rot = MenuDoubleButtonAction("Rotate Left", "Rotate Right", self)
         self.btn_rot.clicked1.connect(self.rotate_left)
         self.btn_rot.clicked2.connect(self.rotate_right)
-        adj_menu.addAction(self.btn_rot)
-        
-        adj_menu.addAction(MenuSeparatorAction(self))
         
         self.btn_flip = MenuDoubleButtonAction("Flip Horizontal", "Flip Vertical", self)
         self.btn_flip.clicked1.connect(self.toggle_flip_h)
         self.btn_flip.clicked2.connect(self.toggle_flip_v)
-        adj_menu.addAction(self.btn_flip)
-
-        adj_menu.addAction(MenuSeparatorAction(self))
         
-        # Lock Aspect Ratio Action (Tick box style)
-        self.m_lock_act = MenuCheckboxAction("Lock Aspect Ratio", self.lock_aspect_ratio, self)
-        self.m_lock_act.toggled.connect(self.toggle_aspect_ratio)
-        adj_menu.addAction(self.m_lock_act)
+        # Assemble Settings Submenu once
+        self._settings_menu.addAction(self.m_scale_act)
+        self._settings_menu.addAction(self.m_width_act)
+        self._settings_menu.addAction(self.m_height_act)
+        self._settings_menu.addAction(self.m_opacity_act)
+        self._settings_menu.addAction(MenuSeparatorAction(self))
+        self._settings_menu.addAction(self.btn_rot)
+        self._settings_menu.addAction(MenuSeparatorAction(self))
+        self._settings_menu.addAction(self.btn_flip)
+        self._settings_menu.addAction(MenuSeparatorAction(self))
+        self._settings_menu.addAction(self.m_lock_aspect)
+        self._settings_menu.addAction(MenuSeparatorAction(self))
         
-        adj_menu.addAction(MenuSeparatorAction(self))
+        self.act_reset = MenuButtonAction("Reset to Default", self)
+        self.act_reset.clicked.connect(lambda: self.load_media(self.current_gif_path))
+        self._settings_menu.addAction(self.act_reset)
         
-        # Reset Button (Matching slider style)
-        act_reset = MenuButtonAction("Reset to Default", self)
-        act_reset.clicked.connect(lambda: self.load_media(self.current_gif_path))
-        adj_menu.addAction(act_reset)
+        elapsed = (time.perf_counter() - start_time) * 1000
+        logger.info(f"Menu initialized in {elapsed:.2f}ms")
 
-        act_pause = menu.addAction("Pause / Play")
-        act_pause.setIcon(self.load_icon("pause.png") or QIcon())
-        act_pause.triggered.connect(self.toggle_pause_gif)
-
-        menu.addSeparator()
-        act_quit = menu.addAction("Quit Application")
-        act_quit.setIcon(self.load_icon("quit.png") or QIcon())
-        act_quit.triggered.connect(QApplication.quit)
-
-        return menu
+    def create_menu(self):
+        """Update and return the persistent menu"""
+        self._main_menu.clear()
+        
+        if self.is_locked:
+            self._main_menu.addAction(self.act_unlock)
+        else:
+            self._main_menu.addAction(self.act_lock)
+            self._main_menu.addSeparator()
+            self._main_menu.addAction(self.act_open)
+            
+            # Sync slider values before showing
+            self.is_updating_menu = True
+            if self.original_size and self.original_size.width() > 0:
+                self.m_scale_act.setValue(int(self.width() / self.original_size.width() * 100))
+            self.m_width_act.setValue(self.width())
+            self.m_height_act.setValue(self.height())
+            self.m_opacity_act.setValue(int(self.windowOpacity() * 100))
+            self.m_lock_aspect.setChecked(self.lock_aspect_ratio)
+            self.is_updating_menu = False
+            
+            self._main_menu.addMenu(self._settings_menu)
+            self._main_menu.addAction(self.act_pause)
+            
+        self._main_menu.addSeparator()
+        self._main_menu.addAction(self.act_quit)
+        return self._main_menu
 
     def unlock_all(self):
         self.is_locked = False
         self.save_settings(self.width(), self.height(), self.windowOpacity())
 
     def open_file_dialog(self):
-        filter = "Media Files (*.gif *.png *.jpg *.jpeg *.bmp *.webp);;GIF Files (*.gif);;Image Files (*.png *.jpg *.jpeg *.bmp *.webp)"
+        filter = "GIF Files (*.gif)"
         dialog = QFileDialog(self)
         dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         dialog.setWindowTitle("Select Media File")
@@ -493,10 +528,12 @@ class GifOnTop(QWidget):
         if self.movie: self.movie.setPaused(not self.movie.state() == QMovie.Paused)
 
     def contextMenuEvent(self, event):
-        self.create_menu().exec_(self.mapToGlobal(event.pos()))
+        menu = self.create_menu()
+        menu.exec_(self.mapToGlobal(event.pos()))
 
     def show_menu_at_center(self):
-        self.create_menu().exec_(self.mapToGlobal(self.rect().center()))
+        menu = self.create_menu()
+        menu.exec_(self.mapToGlobal(self.rect().center()))
 
     def closeEvent(self, event):
         # Simply accept the event to close normally like a standard app
