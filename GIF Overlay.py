@@ -19,7 +19,8 @@ from components.constants import (
     CONFIG_FILE, CONFIG_SETTINGS_FILE, CONFIG_GIF_SETTINGS_DIR, 
     GIF_SAVE_DIR
 )
-from components.dialogs import SavedGifDialog, ResizeOpacityDialog, ModernInputDialog
+from components.dialogs import SavedGifDialog, ModernInputDialog
+from components.widgets import MenuSliderAction, MenuCheckboxAction, MenuButtonAction, MenuSeparatorAction
 
 class GifOnTop(QWidget):
     def __init__(self):
@@ -47,6 +48,7 @@ class GifOnTop(QWidget):
         self.is_locked = False
         self.is_minimized_to_tray = False
         self.lock_aspect_ratio = True
+        self.is_updating_menu = False # Flag for slider syncing
         self.original_size_cache = {} # Cache for media sizes
 
         self.setup_tray_icon()
@@ -294,6 +296,63 @@ class GifOnTop(QWidget):
             )
             self.gif_label.setPixmap(scaled_pix)
 
+    def update_scale_from_menu(self, value):
+        if self.is_updating_menu or not self.original_size: return
+        self.is_updating_menu = True
+        new_w = int(self.original_size.width() * value / 100)
+        new_h = int(self.original_size.height() * value / 100)
+        self.resize(new_w, new_h)
+        
+        # Sync other sliders
+        if hasattr(self, 'm_width_act'): self.m_width_act.setValue(new_w)
+        if hasattr(self, 'm_height_act'): self.m_height_act.setValue(new_h)
+        
+        self.save_settings(new_w, new_h, self.windowOpacity())
+        self.is_updating_menu = False
+
+    def update_width_from_menu(self, value):
+        if self.is_updating_menu: return
+        self.is_updating_menu = True
+        new_w = value
+        new_h = self.height()
+        if self.lock_aspect_ratio and self.original_size and self.original_size.width() > 0:
+            new_h = int(value * self.original_size.height() / self.original_size.width())
+        
+        self.resize(new_w, new_h)
+        
+        # Sync other sliders
+        if hasattr(self, 'm_height_act'): self.m_height_act.setValue(new_h)
+        if hasattr(self, 'm_scale_act') and self.original_size and self.original_size.width() > 0:
+            self.m_scale_act.setValue(int(new_w / self.original_size.width() * 100))
+        
+        self.save_settings(new_w, new_h, self.windowOpacity())
+        self.is_updating_menu = False
+
+    def update_height_from_menu(self, value):
+        if self.is_updating_menu: return
+        self.is_updating_menu = True
+        new_h = value
+        new_w = self.width()
+        if self.lock_aspect_ratio and self.original_size and self.original_size.height() > 0:
+            new_w = int(value * self.original_size.width() / self.original_size.height())
+        
+        self.resize(new_w, new_h)
+        
+        # Sync other sliders
+        if hasattr(self, 'm_width_act'): self.m_width_act.setValue(new_w)
+        if hasattr(self, 'm_scale_act') and self.original_size and self.original_size.height() > 0:
+            self.m_scale_act.setValue(int(new_h / self.original_size.height() * 100))
+            
+        self.save_settings(new_w, new_h, self.windowOpacity())
+        self.is_updating_menu = False
+
+    def update_opacity_from_menu(self, value):
+        self.setWindowOpacity(value / 100)
+        self.save_settings(self.width(), self.height(), self.windowOpacity())
+
+    def toggle_aspect_ratio(self, checked):
+        self.lock_aspect_ratio = checked
+
     def create_menu(self):
         """Create the context menu with dynamic Lock/Unlock state"""
         menu = QMenu(self)
@@ -321,9 +380,48 @@ class GifOnTop(QWidget):
         act_saved.setIcon(self.load_icon("saved.png") or QIcon())
         act_saved.triggered.connect(self.open_saved_gif_dialog)
 
-        act_settings = menu.addAction("Adjust Size & Opacity...")
-        act_settings.setIcon(self.load_icon("settings.png") or QIcon())
-        act_settings.triggered.connect(self.open_resize_opacity_dialog)
+        # Replace dialog with submenu sliders
+        adj_menu = menu.addMenu("Size & Opacity")
+        adj_menu.setIcon(self.load_icon("settings.png") or QIcon())
+        
+        # Scale Slider
+        curr_scale = 100
+        if self.original_size and self.original_size.width() > 0:
+            curr_scale = int(self.width() / self.original_size.width() * 100)
+        
+        self.m_scale_act = MenuSliderAction("Scale", 10, 300, curr_scale, "%", self)
+        self.m_scale_act.valueChanged.connect(self.update_scale_from_menu)
+        adj_menu.addAction(self.m_scale_act)
+        
+        # Width Slider
+        self.m_width_act = MenuSliderAction("Width", 50, 3000, self.width(), "px", self)
+        self.m_width_act.valueChanged.connect(self.update_width_from_menu)
+        adj_menu.addAction(self.m_width_act)
+        
+        # Height Slider
+        self.m_height_act = MenuSliderAction("Height", 50, 3000, self.height(), "px", self)
+        self.m_height_act.valueChanged.connect(self.update_height_from_menu)
+        adj_menu.addAction(self.m_height_act)
+
+        # Opacity Slider
+        curr_opacity = int(self.windowOpacity() * 100)
+        self.m_opacity_act = MenuSliderAction("Opacity", 10, 100, curr_opacity, "%", self)
+        self.m_opacity_act.valueChanged.connect(self.update_opacity_from_menu)
+        adj_menu.addAction(self.m_opacity_act)
+        
+        adj_menu.addAction(MenuSeparatorAction(self))
+        
+        # Lock Aspect Ratio Action (Tick box style)
+        self.m_lock_act = MenuCheckboxAction("Lock Aspect Ratio", self.lock_aspect_ratio, self)
+        self.m_lock_act.toggled.connect(self.toggle_aspect_ratio)
+        adj_menu.addAction(self.m_lock_act)
+        
+        adj_menu.addAction(MenuSeparatorAction(self))
+        
+        # Reset Button (Matching slider style)
+        act_reset = MenuButtonAction("Reset to Default", self)
+        act_reset.clicked.connect(lambda: self.load_media(self.current_gif_path, reset_default=True))
+        adj_menu.addAction(act_reset)
 
         act_pause = menu.addAction("Pause / Play")
         act_pause.setIcon(self.load_icon("pause.png") or QIcon())
@@ -376,8 +474,6 @@ class GifOnTop(QWidget):
             path = dialog.get_selected_path()
             if path: self.load_media(path, reset_default=True)
 
-    def open_resize_opacity_dialog(self):
-        ResizeOpacityDialog(self).exec_()
 
     def toggle_pause_gif(self):
         if self.movie: self.movie.setPaused(not self.movie.state() == QMovie.Paused)
