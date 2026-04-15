@@ -151,7 +151,7 @@ class GifOnTop(QWidget):
         
         demo_gif = BASE_DIR / "demo1.gif"
         if demo_gif.exists():
-            self.load_media(str(demo_gif), reset_default=True)
+            self.load_media(str(demo_gif))
         else:
             QTimer.singleShot(WELCOME_DELAY_MS, lambda: QMessageBox.information(
                 self, "Welcome", "No GIF or Image loaded. Right-click to select one!"
@@ -173,7 +173,7 @@ class GifOnTop(QWidget):
     def load_settings(self):
         return SettingsManager.load(self.current_gif_path)
 
-    def load_media(self, path, reset_default=False):
+    def load_media(self, path):
         if not os.path.exists(path): return
         
         # Clean up previous media
@@ -182,74 +182,86 @@ class GifOnTop(QWidget):
             self.movie = None
         self.gif_label.clear()
         try:
-            # 1. Absolute original size detection using QImageReader
-            reader = QImageReader(path)
-            detected_size = QSize(0, 0)
-            if reader.canRead():
-                detected_size = reader.size()
-            
-            # 2. Try QMovie frameRect if reader fails
-            if not detected_size.isValid() or detected_size.width() <= 0:
-                temp_test_movie = QMovie(path)
-                if temp_test_movie.isValid():
-                    temp_test_movie.jumpToFrame(0)
-                    detected_size = temp_test_movie.frameRect().size()
-
-            # 3. Final default or cache
-            if not detected_size.isValid() or detected_size.width() <= 0:
-                detected_size = self.original_size_cache.get(path, QSize(*DEFAULT_FALLBACK_SIZE))
-            
-            self.original_size = detected_size
-            self.original_size_cache[path] = detected_size
-
-            # Load the actual media
+            # First determine media type
             temp_movie = QMovie(path)
             if temp_movie.isValid():
                 self.movie = temp_movie
                 self.current_pixmap = None  # Reset pixmap khi load GIF
-                self.gif_label.setMovie(self.movie)
-                self.movie.setScaledSize(self.size()) # Initial sync
-                self.movie.start()
-                self.movie.jumpToFrame(0)
+                
+                # Xác định kích thước gốc cho GIF
+                reader = QImageReader(path)
+                detected_size = QSize(0, 0)
+                if reader.canRead():
+                    detected_size = reader.size()
+                if not detected_size.isValid() or detected_size.width() <= 0:
+                    self.movie.jumpToFrame(0)
+                    detected_size = self.movie.frameRect().size()
+                if not detected_size.isValid() or detected_size.width() <= 0:
+                    detected_size = self.original_size_cache.get(path, QSize(*DEFAULT_FALLBACK_SIZE))
+                
+                self.original_size = detected_size
             else:
+                self.movie = None
                 self.current_pixmap = QPixmap(path)
                 if self.current_pixmap.isNull():
                     QMessageBox.warning(self, "Error", "Unsupported file format.")
                     return
-                self.gif_label.setPixmap(self.current_pixmap)
+                # Lấy kích thước gốc trực tiếp từ Pixmap để tránh lỗi EXIF xoay ảnh khác với ImageReader
+                self.original_size = self.current_pixmap.size()
 
-            if reset_default:
-                target_size = self.original_size if self.original_size else QSize(*DEFAULT_RESET_SIZE)
-                # Giới hạn kích thước theo màn hình để tránh cửa sổ biến mất
-                screen = QApplication.primaryScreen().availableGeometry()
-                max_w = int(screen.width() * 0.8)
-                max_h = int(screen.height() * 0.8)
-                if target_size.width() > max_w or target_size.height() > max_h:
-                    target_size = target_size.scaled(max_w, max_h, Qt.KeepAspectRatio)
-                self.resize(target_size)
-                self.setWindowOpacity(1.0)
-                # Căn giữa màn hình
-                self.move(
-                    screen.x() + (screen.width() - target_size.width()) // 2,
-                    screen.y() + (screen.height() - target_size.height()) // 2
+            self.original_size_cache[path] = self.original_size
+
+            # Bù trừ High DPI (ngăn Windows tự phóng to ảnh pixel vật lý sang pixel logic)
+            ratio = QApplication.primaryScreen().devicePixelRatio()
+            if ratio > 1.0:
+                self.original_size = QSize(
+                    int(self.original_size.width() / ratio), 
+                    int(self.original_size.height() / ratio)
                 )
-            else:
-                s = self.load_settings()
-                if s:
-                    w, h, o, _, _, ct = s
-                    self.resize(w, h)
-                    if self.movie:
-                        self.movie.setScaledSize(QSize(w, h))
-                    elif self.current_pixmap:
-                        self.update_static_image_size(w, h)
-                    self.setWindowOpacity(o)
-                    self.is_locked = ct # Use saved status for locking
-                    # Remove click-through flag setting
-                else:
-                    self.resize(self.original_size)
 
+            # 4. Xác định kích thước tải và resize cửa sổ TRƯỚC KHI set media
+            target_size = self.original_size if self.original_size.width() > 0 else QSize(*DEFAULT_RESET_SIZE)
+            
+            # Giới hạn kích thước theo màn hình để tránh cửa sổ quá khổ (80% màn hình)
+            screen = QApplication.primaryScreen().availableGeometry()
+            max_w = int(screen.width() * 0.8)
+            max_h = int(screen.height() * 0.8)
+            if target_size.width() > max_w or target_size.height() > max_h:
+                target_size = target_size.scaled(max_w, max_h, Qt.KeepAspectRatio)
+
+            # Khôi phục trạng thái lock nếu có
+            s = self.load_settings()
+            if s:
+                _, _, _, _, _, ct = s
+                self.is_locked = ct
+
+            self.resize(target_size)
+            self.setWindowOpacity(1.0)
+
+            # Căn giữa màn hình
+            screen = QApplication.primaryScreen().availableGeometry()
+            self.move(
+                screen.x() + (screen.width() - target_size.width()) // 2,
+                screen.y() + (screen.height() - target_size.height()) // 2
+            )
+
+            # Gán media vào giao diện
+            if self.movie:
+                self.movie.setScaledSize(target_size)
+                self.gif_label.setMovie(self.movie)
+                self.movie.start()
+            elif self.current_pixmap:
+                scaled_pix = self.current_pixmap.scaled(
+                    target_size.width(), target_size.height(),
+                    Qt.IgnoreAspectRatio, 
+                    Qt.SmoothTransformation
+                )
+                self.gif_label.setPixmap(scaled_pix)
+
+            # Cập nhật đường dẫn hiện tại và lưu lại
             self.current_gif_path = path
             SettingsManager.save_last_path(path)
+            
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to load media:\n{str(e)}")
 
@@ -406,7 +418,7 @@ class GifOnTop(QWidget):
         
         # Reset Button (Matching slider style)
         act_reset = MenuButtonAction("Reset to Default", self)
-        act_reset.clicked.connect(lambda: self.load_media(self.current_gif_path, reset_default=True))
+        act_reset.clicked.connect(lambda: self.load_media(self.current_gif_path))
         adj_menu.addAction(act_reset)
 
         act_pause = menu.addAction("Pause / Play")
@@ -451,14 +463,14 @@ class GifOnTop(QWidget):
         
         if dialog.exec_():
             paths = dialog.selectedFiles()
-            if paths: self.load_media(paths[0], reset_default=True)
+            if paths: self.load_media(paths[0])
 
     def open_saved_gif_dialog(self):
         if not GIF_SAVE_DIR.exists(): GIF_SAVE_DIR.mkdir(parents=True)
         dialog = SavedGifDialog(GIF_SAVE_DIR, self)
         if dialog.exec_() == SavedGifDialog.Accepted:
             path = dialog.get_selected_path()
-            if path: self.load_media(path, reset_default=True)
+            if path: self.load_media(path)
 
 
     def toggle_pause_gif(self):
