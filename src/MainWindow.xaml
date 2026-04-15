@@ -1,0 +1,134 @@
+﻿<Window x:Class="GifOverlay.Wpf.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:gif="http://wpfanimatedgif.codeplex.com"
+        xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+        Title="GIF Overlay" 
+        Height="300" Width="300"
+        WindowStyle="None" 
+        AllowsTransparency="True" 
+        Background="Transparent" 
+        Topmost="True"
+        ShowInTaskbar="True"
+        WindowStartupLocation="CenterScreen"
+        Icon="pack://application:,,,/GIF-Overlay;component/assets/app_icon.ico"
+        MouseLeftButtonDown="Window_MouseLeftButtonDown"
+        MouseWheel="Window_MouseWheel">
+    
+    <Window.TaskbarItemInfo>
+        <TaskbarItemInfo/>
+    </Window.TaskbarItemInfo>
+    
+    <Window.ContextMenu>
+        <ContextMenu>
+            <MenuItem Header="Lock Window" IsCheckable="True" IsChecked="{Binding IsLocked, RelativeSource={RelativeSource AncestorType=Window}}" Click="Lock_Click">
+                <MenuItem.Icon>
+                    <iconPacks:PackIconMaterial Kind="Lock" Width="16" Height="16"/>
+                </MenuItem.Icon>
+            </MenuItem>
+            <Separator/>
+            <MenuItem Header="Change GIF..." Click="Open_Click">
+                <MenuItem.Icon>
+                    <iconPacks:PackIconMaterial Kind="FileImage" Width="16" Height="16"/>
+                </MenuItem.Icon>
+            </MenuItem>
+            <Separator/>
+            <MenuItem Header="Settings">
+                <MenuItem.Icon>
+                    <iconPacks:PackIconMaterial Kind="Cog" Width="16" Height="16"/>
+                </MenuItem.Icon>
+                <MenuItem Header="Resizing">
+                    <MenuItem.Icon>
+                        <iconPacks:PackIconMaterial Kind="CropFree" Width="16" Height="16"/>
+                    </MenuItem.Icon>
+                    <MenuItem x:Name="MenuScale" StaysOpenOnClick="True">
+                        <MenuItem.Header>
+                            <Grid Width="250">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="80"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Scale (%)" VerticalAlignment="Center" Grid.Column="0"/>
+                                <Slider x:Name="ScaleSlider" Minimum="10" Maximum="500" Value="100" Grid.Column="1" ValueChanged="ScaleSlider_ValueChanged"/>
+                            </Grid>
+                        </MenuItem.Header>
+                    </MenuItem>
+                    <MenuItem x:Name="MenuWidth" StaysOpenOnClick="True">
+                        <MenuItem.Header>
+                            <Grid Width="250">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="80"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Width (px)" VerticalAlignment="Center" Grid.Column="0"/>
+                                <Slider x:Name="WidthSlider" Minimum="50" Maximum="2000" Value="300" Grid.Column="1" ValueChanged="WidthSlider_ValueChanged"/>
+                            </Grid>
+                        </MenuItem.Header>
+                    </MenuItem>
+                    <MenuItem x:Name="MenuHeight" StaysOpenOnClick="True">
+                        <MenuItem.Header>
+                            <Grid Width="250">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="80"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Height (px)" VerticalAlignment="Center" Grid.Column="0"/>
+                                <Slider x:Name="HeightSlider" Minimum="50" Maximum="2000" Value="300" Grid.Column="1" ValueChanged="HeightSlider_ValueChanged"/>
+                            </Grid>
+                        </MenuItem.Header>
+                    </MenuItem>
+                    <MenuItem x:Name="MenuOpacity" StaysOpenOnClick="True">
+                        <MenuItem.Header>
+                            <Grid Width="250">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="80"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Opacity (%)" VerticalAlignment="Center" Grid.Column="0"/>
+                                <Slider x:Name="OpacitySlider" Minimum="10" Maximum="100" Value="100" Grid.Column="1" ValueChanged="OpacitySlider_ValueChanged"/>
+                            </Grid>
+                        </MenuItem.Header>
+                    </MenuItem>
+                </MenuItem>
+                <MenuItem Header="Transform">
+                    <MenuItem.Icon>
+                        <iconPacks:PackIconMaterial Kind="Sync" Width="16" Height="16"/>
+                    </MenuItem.Icon>
+                    <MenuItem Header="Rotate Left" Click="RotateLeft_Click" StaysOpenOnClick="True"/>
+                    <MenuItem Header="Rotate Right" Click="Rotate_Click" StaysOpenOnClick="True"/>
+                    <Separator/>
+                    <MenuItem Header="Flip Horizontal" Click="FlipH_Click" StaysOpenOnClick="True"/>
+                    <MenuItem Header="Flip Vertical" Click="FlipV_Click" StaysOpenOnClick="True"/>
+                </MenuItem>
+                <Separator/>
+                <MenuItem Header="Reset to Default" Click="Reset_Click" StaysOpenOnClick="True">
+                    <MenuItem.Icon>
+                        <iconPacks:PackIconMaterial Kind="BackupRestore" Width="16" Height="16"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+            </MenuItem>
+            <Separator/>
+            <MenuItem x:Name="MenuPause" Header="Pause / Play" Click="Pause_Click">
+                <MenuItem.Icon>
+                    <iconPacks:PackIconMaterial Kind="Pause" Width="16" Height="16"/>
+                </MenuItem.Icon>
+            </MenuItem>
+            <Separator/>
+            <MenuItem Header="Exit" Click="Exit_Click">
+                <MenuItem.Icon>
+                    <iconPacks:PackIconMaterial Kind="Power" Width="16" Height="16"/>
+                </MenuItem.Icon>
+            </MenuItem>
+        </ContextMenu>
+    </Window.ContextMenu>
+    <Grid>
+        <Image x:Name="GifImage" Stretch="Fill" RenderTransformOrigin="0.5,0.5">
+            <Image.RenderTransform>
+                <TransformGroup>
+                    <ScaleTransform x:Name="GifScale"/>
+                    <RotateTransform x:Name="GifRotation"/>
+                </TransformGroup>
+            </Image.RenderTransform>
+        </Image>
+    </Grid>
+</Window>
