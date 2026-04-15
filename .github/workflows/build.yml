@@ -12,6 +12,8 @@ jobs:
   tag:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    outputs:
+      new_tag: ${{ steps.tagging.outputs.new_tag }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -28,6 +30,7 @@ jobs:
             echo "type=patch" >> $GITHUB_OUTPUT
           fi
       - name: Bump version and push tag
+        id: tagging
         uses: anothrNick/github-tag-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -37,8 +40,7 @@ jobs:
   # 2. Build và Release
   build:
     runs-on: windows-latest
-    if: |
-      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
+    if: always() && !cancelled() && !failure()
     needs: tag
     steps:
     - name: Checkout code
@@ -62,10 +64,7 @@ jobs:
     - name: Create Portable Zip
       shell: powershell
       run: |
-        # 1. Clean old zips
         if (Test-Path "dist/*.zip") { Remove-Item "dist/*.zip" }
-        
-        # 2. Zip the folder as the Portable version
         Compress-Archive -Path "dist/GIF-Overlay" -DestinationPath "dist/GIF-Overlay-Portable.zip"
 
     - name: Compile Setup (Inno Setup)
@@ -73,15 +72,25 @@ jobs:
       with:
         path: setup_script.iss
 
+    - name: Determine Release Tag
+      id: release_tag
+      shell: bash
+      run: |
+        if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+          echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+        else
+          echo "tag=${{ needs.tag.outputs.new_tag }}" >> $GITHUB_OUTPUT
+        fi
+
     - name: Create Release
-      if: startsWith(github.ref, 'refs/tags/')
+      if: steps.release_tag.outputs.tag != ''
       uses: softprops/action-gh-release@v2
       with:
-        # Upload BOTH the Portable Zip and the Setup Executable
+        tag_name: ${{ steps.release_tag.outputs.tag }}
         files: |
           dist/GIF-Overlay-Portable.zip
           dist/GIF-Overlay-Setup.exe
-        name: Release ${{ github.ref_name }}
+        name: Release ${{ steps.release_tag.outputs.tag }}
         draft: false
         prerelease: false
       env:
