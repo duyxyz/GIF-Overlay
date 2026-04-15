@@ -8,9 +8,36 @@ on:
       - main
 
 jobs:
+  # 1. Tự động tạo Tag khi push vào main
+  tag:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
+      - name: Determine Bump Type
+        id: bump_type
+        shell: bash
+        run: |
+          latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.0.0")
+          patch=$(echo $latest_tag | cut -d. -f3)
+          if [ "$patch" -eq 9 ]; then
+            echo "type=minor" >> $GITHUB_OUTPUT
+          else
+            echo "type=patch" >> $GITHUB_OUTPUT
+          fi
+      - name: Bump version and push tag
+        uses: anothrNick/github-tag-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WITH_V: true
+          DEFAULT_BUMP: ${{ steps.bump_type.outputs.type }}
+
+  # 2. Build và Release khi có Tag
   build:
     runs-on: windows-latest
-
+    if: startsWith(github.ref, 'refs/tags/')
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -19,15 +46,15 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
+        cache: 'pip'
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install PyQt5 pyinstaller
+        pip install -r requirements.txt
 
     - name: Build with PyInstaller (Directory Mode)
       run: |
-        # Build the folder structure first
         pyinstaller --noconfirm --onedir --windowed --icon "assets/app_icon.ico" --add-data "assets;assets" --add-data "demo1.gif;." --name "GIF-Overlay" "GIF Overlay.py"
 
     - name: Create Portable Zip
