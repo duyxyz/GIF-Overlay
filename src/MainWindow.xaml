@@ -23,19 +23,19 @@
         <ContextMenu>
             <MenuItem Header="Lock Window" IsCheckable="True" IsChecked="{Binding IsLocked, RelativeSource={RelativeSource AncestorType=Window}}" Click="Lock_Click">
                 <MenuItem.Icon>
-                    <iconPacks:PackIconMaterial Kind="Lock" Width="16" Height="16"/>
+                    <iconPacks:PackIconMaterial Kind="LockOutline" Width="16" Height="16"/>
                 </MenuItem.Icon>
             </MenuItem>
             <Separator/>
             <MenuItem Header="Change GIF..." Click="Open_Click">
                 <MenuItem.Icon>
-                    <iconPacks:PackIconMaterial Kind="FileImage" Width="16" Height="16"/>
+                    <iconPacks:PackIconMaterial Kind="FileImageOutline" Width="16" Height="16"/>
                 </MenuItem.Icon>
             </MenuItem>
             <Separator/>
             <MenuItem Header="Settings">
                 <MenuItem.Icon>
-                    <iconPacks:PackIconMaterial Kind="Cog" Width="16" Height="16"/>
+                    <iconPacks:PackIconMaterial Kind="CogOutline" Width="16" Height="16"/>
                 </MenuItem.Icon>
                 <MenuItem Header="Resizing">
                     <MenuItem.Icon>
@@ -110,7 +110,7 @@
             <Separator/>
             <MenuItem x:Name="MenuPause" Header="Pause / Play" Click="Pause_Click">
                 <MenuItem.Icon>
-                    <iconPacks:PackIconMaterial Kind="Pause" Width="16" Height="16"/>
+                    <iconPacks:PackIconMaterial Kind="PauseCircleOutline" Width="16" Height="16"/>
                 </MenuItem.Icon>
             </MenuItem>
             <Separator/>
