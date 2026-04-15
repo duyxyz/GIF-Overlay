@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.6.0.schema.json
+
+PackageIdentifier: duyxyz.GIF-Overlay
+PackageVersion: 1.1.0
+InstallerType: inno
+Installers:
+  - Architecture: x64
+    InstallerUrl: https://github.com/duyxyz/GIF-Overlay/releases/download/v1.1.0/GIF-Overlay-Setup.exe
+    InstallerSha256: 0000000000000000000000000000000000000000000000000000000000000000 # Will be updated by wingetcreate
+ManifestType: installer
+ManifestVersion: 1.6.0
