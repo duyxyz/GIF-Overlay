@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import (
     QVBoxLayout, QMenu, QMessageBox, QInputDialog,
     QSystemTrayIcon, QAction
 )
-from PyQt5.QtGui import QMovie, QIcon, QPalette, QColor, QPixmap, QImageReader
+from PyQt5.QtGui import QMovie, QIcon, QPalette, QColor, QPixmap, QImageReader, QPainter
 from PyQt5.QtCore import Qt, QSize, QTimer
 import ctypes
 
@@ -67,10 +67,22 @@ class GifOnTop(QWidget):
         except: pass
 
     def load_icon(self, icon_name):
-        """Load icon from assets folder"""
+        """Load icon from assets folder and tint it for visibility"""
         base_dir = Path(getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__))))
         icon_path = base_dir / "assets" / icon_name
-        return QIcon(str(icon_path)) if icon_path.exists() else None
+        if not icon_path.exists():
+            return QIcon()
+            
+        pixmap = QPixmap(str(icon_path))
+        
+        # Tint white icons to dark grey for visibility on light menus
+        # This fills the opaque parts of the icon with the specified color
+        painter = QPainter(pixmap)
+        painter.setCompositionMode(QPainter.CompositionMode_SourceIn)
+        painter.fillRect(pixmap.rect(), QColor("#2D2D2D")) 
+        painter.end()
+        
+        return QIcon(pixmap)
 
     def setup_tray_icon(self):
         """Setup system tray icon with dark menu"""
