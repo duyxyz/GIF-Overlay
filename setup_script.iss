@@ -10,8 +10,7 @@ AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
-; AppExeName is NOT a valid directive, so we remove it. 
-; The Executable name is used in [Icons] and [Run] via the define above.
+ChangesAssociations=yes
 
 ; Make the setup look modern
 WizardStyle=modern
@@ -41,5 +40,12 @@ Source: "dist\GIF-Overlay\*"; DestDir: "{app}"; Flags: ignoreversion recursesubd
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
+[Registry]
+Root: HKCU; Subkey: "Software\Classes\.gif\OpenWithProgids"; ValueType: string; ValueName: "GIFOverlay.gif"; ValueData: ""; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\GIFOverlay.gif"; ValueType: string; ValueName: ""; ValueData: "GIF Image"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\GIFOverlay.gif\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#MyAppExeName},0"
+Root: HKCU; Subkey: "Software\Classes\GIFOverlay.gif\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""
+
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall skipifsilent
+
