@@ -1,13 +1,12 @@
 import os
 import sys
 import shutil
-import hashlib
 from pathlib import Path
 from typing import Optional
 
 from PyQt5.QtWidgets import (
     QApplication, QLabel, QFileDialog, QWidget,
-    QVBoxLayout, QMenu, QMessageBox, QInputDialog,
+    QVBoxLayout, QMenu, QMessageBox,
     QSystemTrayIcon, QAction
 )
 from PyQt5.QtGui import QMovie, QIcon, QPalette, QColor, QPixmap, QImageReader, QPainter
@@ -16,11 +15,13 @@ import ctypes
 
 # Import local components
 from components.constants import (
-    CONFIG_FILE, CONFIG_SETTINGS_FILE, CONFIG_GIF_SETTINGS_DIR, 
-    GIF_SAVE_DIR
+    GIF_SAVE_DIR, BASE_DIR, DEFAULT_FALLBACK_SIZE, DEFAULT_RESET_SIZE,
+    TRAY_MSG_TIMEOUT, TRAY_MSG_TIMEOUT_LONG, WELCOME_DELAY_MS,
+    MENU_OPEN_DELAY_MS, SLIDER_SCALE_RANGE, SLIDER_SIZE_RANGE, SLIDER_OPACITY_RANGE
 )
 from components.dialogs import SavedGifDialog, ModernInputDialog
 from components.widgets import MenuSliderAction, MenuCheckboxAction, MenuButtonAction, MenuSeparatorAction
+from components.settings_manager import SettingsManager
 
 class GifOnTop(QWidget):
     def __init__(self):
@@ -50,13 +51,20 @@ class GifOnTop(QWidget):
         self.lock_aspect_ratio = True
         self.is_updating_menu = False # Flag for slider syncing
         self.original_size_cache = {} # Cache for media sizes
+        
+        # Debounce timer for save_settings
+        self._save_timer = QTimer(self)
+        self._save_timer.setSingleShot(True)
+        self._save_timer.setInterval(300)
+        self._save_timer.timeout.connect(self._flush_settings)
+        self._pending_settings = None
 
         self.setup_tray_icon()
         self.load_initial_gif()
         self.show()
         
         if not self.current_gif_path:
-            QTimer.singleShot(100, self.show_menu_at_center)
+            QTimer.singleShot(MENU_OPEN_DELAY_MS, self.show_menu_at_center)
 
     def apply_dark_title_bar(self, target_widget=None):
         """Enable Windows Immersive Dark Mode for the title bar"""
@@ -66,12 +74,12 @@ class GifOnTop(QWidget):
             hwnd = int(widget.winId())
             # DWMWA_USE_IMMERSIVE_DARK_MODE = 20 (Windows 11, recent Win 10)
             ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, 20, ctypes.byref(ctypes.c_int(1)), 4)
-        except: pass
+        except Exception:
+            pass  # Dark mode không khả dụng trên hệ thống này
 
     def load_icon(self, icon_name):
         """Load icon from assets folder and tint it for visibility"""
-        base_dir = Path(getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__))))
-        icon_path = base_dir / "assets" / icon_name
+        icon_path = BASE_DIR / "assets" / icon_name
         if not icon_path.exists():
             return QIcon()
             
@@ -88,10 +96,9 @@ class GifOnTop(QWidget):
 
     def setup_tray_icon(self):
         """Setup system tray icon with dark menu"""
-        base_dir = Path(getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__))))
-        icon_path = base_dir / "assets" / "app_icon.ico"
+        icon_path = BASE_DIR / "assets" / "app_icon.ico"
         if not icon_path.exists():
-            icon_path = base_dir / "app_icon.ico"
+            icon_path = BASE_DIR / "app_icon.ico"
 
         self.tray_icon = QSystemTrayIcon(self)
         icon = QIcon(str(icon_path)) if icon_path.exists() else self.style().standardIcon(QApplication.style().SP_ComputerIcon)
@@ -137,68 +144,34 @@ class GifOnTop(QWidget):
 
 
     def load_initial_gif(self):
-        if CONFIG_FILE.exists():
-            try:
-                with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-                    path = f.read().strip()
-                    if os.path.exists(path):
-                        self.load_media(path)
-                        return
-            except Exception as e:
-                print(f"Error loading last gif: {e}")
+        last_path = SettingsManager.load_last_path()
+        if last_path and os.path.exists(last_path):
+            self.load_media(last_path)
+            return
         
-        base_dir = Path(getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__))))
-        demo_gif = base_dir / "demo1.gif"
+        demo_gif = BASE_DIR / "demo1.gif"
         if demo_gif.exists():
             self.load_media(str(demo_gif), reset_default=True)
         else:
-            QTimer.singleShot(500, lambda: QMessageBox.information(
+            QTimer.singleShot(WELCOME_DELAY_MS, lambda: QMessageBox.information(
                 self, "Welcome", "No GIF or Image loaded. Right-click to select one!"
             ))
 
     def save_settings(self, width: int, height: int, opacity: float):
-        try:
-            # We no longer save X, Y position to avoid 'buggy' placement
-            lock_status = 1 if self.is_locked else 0
-            settings_str = f"{width}\n{height}\n{opacity}\n0\n0\n{lock_status}\n"
-            with open(CONFIG_SETTINGS_FILE, "w", encoding="utf-8") as f:
-                f.write(settings_str)
-            if self.current_gif_path:
-                config_path = CONFIG_GIF_SETTINGS_DIR / self.get_gif_config_name(self.current_gif_path)
-                with open(config_path, "w", encoding="utf-8") as f:
-                    f.write(settings_str)
-        except Exception as e:
-            print(f"Error saving settings: {e}")
+        """Debounced save — chỉ ghi file sau 300ms không thay đổi"""
+        self._pending_settings = (width, height, opacity)
+        self._save_timer.start()
+
+    def _flush_settings(self):
+        """Thực sự ghi settings ra file"""
+        if not self._pending_settings:
+            return
+        width, height, opacity = self._pending_settings
+        self._pending_settings = None
+        SettingsManager.save(width, height, opacity, self.is_locked, self.current_gif_path)
 
     def load_settings(self):
-        settings_data = None
-        if self.current_gif_path:
-            config_path = CONFIG_GIF_SETTINGS_DIR / self.get_gif_config_name(self.current_gif_path)
-            if config_path.exists():
-                try:
-                    with open(config_path, "r", encoding="utf-8") as f:
-                        settings_data = f.read().splitlines()
-                except: pass
-        
-        if not settings_data and CONFIG_SETTINGS_FILE.exists():
-            try:
-                with open(CONFIG_SETTINGS_FILE, "r", encoding="utf-8") as f:
-                    settings_data = f.read().splitlines()
-            except: pass
-                
-        if settings_data and len(settings_data) >= 3:
-            try:
-                w, h = int(settings_data[0]), int(settings_data[1])
-                o = float(settings_data[2])
-                ct = (int(settings_data[5]) == 1) if len(settings_data) >= 6 else False
-                return w, h, o, None, None, ct
-            except: pass
-        return None
-    
-    def get_gif_config_name(self, gif_path):
-        path_hash = hashlib.md5(gif_path.encode()).hexdigest()
-        safe_name = "".join(c if c.isalnum() or c in ('-', '_') else '_' for c in Path(gif_path).stem)
-        return f"{safe_name}_{path_hash[:8]}.txt"
+        return SettingsManager.load(self.current_gif_path)
 
     def load_media(self, path, reset_default=False):
         if not os.path.exists(path): return
@@ -224,7 +197,7 @@ class GifOnTop(QWidget):
 
             # 3. Final default or cache
             if not detected_size.isValid() or detected_size.width() <= 0:
-                detected_size = self.original_size_cache.get(path, QSize(400, 400))
+                detected_size = self.original_size_cache.get(path, QSize(*DEFAULT_FALLBACK_SIZE))
             
             self.original_size = detected_size
             self.original_size_cache[path] = detected_size
@@ -233,6 +206,7 @@ class GifOnTop(QWidget):
             temp_movie = QMovie(path)
             if temp_movie.isValid():
                 self.movie = temp_movie
+                self.current_pixmap = None  # Reset pixmap khi load GIF
                 self.gif_label.setMovie(self.movie)
                 self.movie.setScaledSize(self.size()) # Initial sync
                 self.movie.start()
@@ -245,8 +219,20 @@ class GifOnTop(QWidget):
                 self.gif_label.setPixmap(self.current_pixmap)
 
             if reset_default:
-                self.resize(self.original_size if self.original_size else QSize(300, 300))
+                target_size = self.original_size if self.original_size else QSize(*DEFAULT_RESET_SIZE)
+                # Giới hạn kích thước theo màn hình để tránh cửa sổ biến mất
+                screen = QApplication.primaryScreen().availableGeometry()
+                max_w = int(screen.width() * 0.8)
+                max_h = int(screen.height() * 0.8)
+                if target_size.width() > max_w or target_size.height() > max_h:
+                    target_size = target_size.scaled(max_w, max_h, Qt.KeepAspectRatio)
+                self.resize(target_size)
                 self.setWindowOpacity(1.0)
+                # Căn giữa màn hình
+                self.move(
+                    screen.x() + (screen.width() - target_size.width()) // 2,
+                    screen.y() + (screen.height() - target_size.height()) // 2
+                )
             else:
                 s = self.load_settings()
                 if s:
@@ -263,7 +249,7 @@ class GifOnTop(QWidget):
                     self.resize(self.original_size)
 
             self.current_gif_path = path
-            with open(CONFIG_FILE, "w", encoding="utf-8") as f: f.write(path)
+            SettingsManager.save_last_path(path)
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to load media:\n{str(e)}")
 
@@ -283,7 +269,7 @@ class GifOnTop(QWidget):
         
         # Update tray icon message
         status = "Locked" if self.is_locked else "Unlocked"
-        self.tray_icon.showMessage("GIF Overlay", f"Window is now {status}.", QSystemTrayIcon.Information, 1000)
+        self.tray_icon.showMessage("GIF Overlay", f"Window is now {status}.", QSystemTrayIcon.Information, TRAY_MSG_TIMEOUT)
         self.update_tray_menu() # Immediate update
 
     def update_static_image_size(self, w: int, h: int):
@@ -389,23 +375,23 @@ class GifOnTop(QWidget):
         if self.original_size and self.original_size.width() > 0:
             curr_scale = int(self.width() / self.original_size.width() * 100)
         
-        self.m_scale_act = MenuSliderAction("Scale", 10, 300, curr_scale, "%", self)
+        self.m_scale_act = MenuSliderAction("Scale", *SLIDER_SCALE_RANGE, curr_scale, "%", self)
         self.m_scale_act.valueChanged.connect(self.update_scale_from_menu)
         adj_menu.addAction(self.m_scale_act)
         
         # Width Slider
-        self.m_width_act = MenuSliderAction("Width", 50, 3000, self.width(), "px", self)
+        self.m_width_act = MenuSliderAction("Width", *SLIDER_SIZE_RANGE, self.width(), "px", self)
         self.m_width_act.valueChanged.connect(self.update_width_from_menu)
         adj_menu.addAction(self.m_width_act)
         
         # Height Slider
-        self.m_height_act = MenuSliderAction("Height", 50, 3000, self.height(), "px", self)
+        self.m_height_act = MenuSliderAction("Height", *SLIDER_SIZE_RANGE, self.height(), "px", self)
         self.m_height_act.valueChanged.connect(self.update_height_from_menu)
         adj_menu.addAction(self.m_height_act)
 
         # Opacity Slider
         curr_opacity = int(self.windowOpacity() * 100)
-        self.m_opacity_act = MenuSliderAction("Opacity", 10, 100, curr_opacity, "%", self)
+        self.m_opacity_act = MenuSliderAction("Opacity", *SLIDER_OPACITY_RANGE, curr_opacity, "%", self)
         self.m_opacity_act.valueChanged.connect(self.update_opacity_from_menu)
         adj_menu.addAction(self.m_opacity_act)
         
@@ -509,7 +495,7 @@ class GifOnTop(QWidget):
         self.is_minimized_to_tray = True
         self.setWindowFlags(self.windowFlags() | Qt.Tool)
         self.show()
-        self.tray_icon.showMessage("GIF Overlay", "Minimized to tray.", QSystemTrayIcon.Information, 1500)
+        self.tray_icon.showMessage("GIF Overlay", "Minimized to tray.", QSystemTrayIcon.Information, TRAY_MSG_TIMEOUT_LONG)
         self.update_tray_menu()
 
     def show_normal(self):

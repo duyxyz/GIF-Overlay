@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QLabel, QFrame, QSplitter,
     QListWidget, QListWidgetItem, QHBoxLayout, QMessageBox,
-    QCheckBox, QWidget, QLineEdit
+    QWidget, QLineEdit
 )
 from PyQt5.QtGui import QMovie, QIcon, QPixmap
 from PyQt5.QtCore import Qt, QSize
@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 
 from components.buttons import ModernButton
-from components.widgets import ModernSlider
+
 
 
 class ModernInputDialog(QDialog):
