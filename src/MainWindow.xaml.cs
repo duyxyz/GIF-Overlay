@@ -52,11 +52,9 @@ namespace GifOverlay.Wpf
                 Console.WriteLine($"Icon load failed: {ex.Message}");
             }
 
-            this.Width = _settings.Width;
-            this.Height = _settings.Height;
-            this.Left = (SystemParameters.PrimaryScreenWidth - this.Width) / 2;
-            this.Top = (SystemParameters.PrimaryScreenHeight - this.Height) / 2;
-
+            // Window Startup Location takes care of initial screen centering
+            // We do not apply saved Width/Height anymore to allow each image to load natively.
+            
             // Ưu tiên 1: File được truyền qua dòng lệnh (Open With)
             if (args != null && args.Length > 0 && System.IO.File.Exists(args[0]))
             {
@@ -87,6 +85,24 @@ namespace GifOverlay.Wpf
                 
                 ImageBehavior.SetAnimatedSource(GifImage, image);
                 _originalSize = new Size(image.PixelWidth, image.PixelHeight);
+                
+                // Auto fit window to image size at 1:1, scale down if larger than 80% screen
+                double targetW = _originalSize.Width;
+                double targetH = _originalSize.Height;
+                
+                if (targetW > SystemParameters.PrimaryScreenWidth * 0.8 || targetH > SystemParameters.PrimaryScreenHeight * 0.8)
+                {
+                    double ratio = Math.Min(SystemParameters.PrimaryScreenWidth * 0.8 / targetW, SystemParameters.PrimaryScreenHeight * 0.8 / targetH);
+                    targetW *= ratio;
+                    targetH *= ratio;
+                }
+
+                ResizeWindow(targetW, targetH);
+                
+                // Center the window
+                this.Left = (SystemParameters.PrimaryScreenWidth - this.Width) / 2;
+                this.Top = (SystemParameters.PrimaryScreenHeight - this.Height) / 2;
+                
                 _settings.LastGifPath = path;
                 ScheduleSave();
             }
