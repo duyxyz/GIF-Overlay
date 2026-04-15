@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -242,6 +243,15 @@ namespace GifOverlay.Wpf
             ScheduleSave();
         }
 
+        private void UpdateSliderValueText(object sender, string format)
+        {
+            if (sender is Slider slider && slider.Parent is Grid grid && grid.Children.Count > 2)
+            {
+                if (grid.Children[2] is TextBlock tb)
+                    tb.Text = format;
+            }
+        }
+
         private void ScaleSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (IsLoaded && GifImage.Source is BitmapSource bs)
@@ -249,8 +259,8 @@ namespace GifOverlay.Wpf
                 double ratio = (double)bs.PixelWidth / bs.PixelHeight;
                 double newW = 300 * (e.NewValue / 100) * (ratio > 1 ? ratio : 1);
                 double newH = 300 * (e.NewValue / 100) / (ratio < 1 ? 1 / ratio : 1);
-                // Simple scale for now, can be refined
                 ResizeWindow(newW, newH);
+                UpdateSliderValueText(sender, $"{(int)e.NewValue}%");
             }
         }
 
@@ -259,6 +269,7 @@ namespace GifOverlay.Wpf
             if (IsLoaded)
             {
                 ResizeWindow(e.NewValue, this.Height);
+                UpdateSliderValueText(sender, $"{(int)e.NewValue}px");
             }
         }
 
@@ -267,6 +278,7 @@ namespace GifOverlay.Wpf
             if (IsLoaded)
             {
                 ResizeWindow(this.Width, e.NewValue);
+                UpdateSliderValueText(sender, $"{(int)e.NewValue}px");
             }
         }
 
@@ -274,9 +286,10 @@ namespace GifOverlay.Wpf
         {
             if (IsLoaded)
             {
-                 this.Opacity = e.NewValue / 100.0;
+                this.Opacity = e.NewValue / 100.0;
                 _settings.Opacity = this.Opacity;
                 ScheduleSave();
+                UpdateSliderValueText(sender, $"{(int)e.NewValue}%");
             }
         }
     }

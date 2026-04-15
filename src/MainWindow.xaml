@@ -39,53 +39,73 @@
                 </MenuItem.Icon>
                 <MenuItem Header="Resizing">
                     <MenuItem.Icon>
-                        <iconPacks:PackIconMaterial Kind="CropFree" Width="16" Height="16"/>
+                        <iconPacks:PackIconMaterial Kind="ArrowExpandAll" Width="16" Height="16"/>
                     </MenuItem.Icon>
-                    <MenuItem x:Name="MenuScale" StaysOpenOnClick="True">
+                    <MenuItem x:Name="MenuScale" StaysOpenOnClick="True" HorizontalContentAlignment="Stretch">
+                        <MenuItem.Icon>
+                            <iconPacks:PackIconMaterial Kind="MagnifyPlusOutline" Width="14" Height="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </MenuItem.Icon>
                         <MenuItem.Header>
-                            <Grid Width="250">
+                            <Grid MinWidth="250" Margin="0,0,-40,0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="80"/>
+                                    <ColumnDefinition Width="70"/>
                                     <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="45"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Scale (%)" VerticalAlignment="Center" Grid.Column="0"/>
-                                <Slider x:Name="ScaleSlider" Minimum="10" Maximum="500" Value="100" Grid.Column="1" ValueChanged="ScaleSlider_ValueChanged"/>
+                                <TextBlock Text="Scale" VerticalAlignment="Center" Grid.Column="0"/>
+                                <Slider x:Name="ScaleSlider" Minimum="10" Maximum="500" Value="100" Grid.Column="1" VerticalAlignment="Center" ValueChanged="ScaleSlider_ValueChanged"/>
+                                <TextBlock x:Name="ScaleValue" Text="100%" VerticalAlignment="Center" Grid.Column="2" TextAlignment="Right" Foreground="Gray"/>
                             </Grid>
                         </MenuItem.Header>
                     </MenuItem>
-                    <MenuItem x:Name="MenuWidth" StaysOpenOnClick="True">
+                    <MenuItem x:Name="MenuWidth" StaysOpenOnClick="True" HorizontalContentAlignment="Stretch">
+                        <MenuItem.Icon>
+                            <iconPacks:PackIconMaterial Kind="ArrowLeftRight" Width="14" Height="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </MenuItem.Icon>
                         <MenuItem.Header>
-                            <Grid Width="250">
+                            <Grid MinWidth="250" Margin="0,0,-40,0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="80"/>
+                                    <ColumnDefinition Width="70"/>
                                     <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="45"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Width (px)" VerticalAlignment="Center" Grid.Column="0"/>
-                                <Slider x:Name="WidthSlider" Minimum="50" Maximum="2000" Value="300" Grid.Column="1" ValueChanged="WidthSlider_ValueChanged"/>
+                                <TextBlock Text="Width" VerticalAlignment="Center" Grid.Column="0"/>
+                                <Slider x:Name="WidthSlider" Minimum="50" Maximum="2000" Value="300" Grid.Column="1" VerticalAlignment="Center" ValueChanged="WidthSlider_ValueChanged"/>
+                                <TextBlock x:Name="WidthValue" Text="300px" VerticalAlignment="Center" Grid.Column="2" TextAlignment="Right" Foreground="Gray"/>
                             </Grid>
                         </MenuItem.Header>
                     </MenuItem>
-                    <MenuItem x:Name="MenuHeight" StaysOpenOnClick="True">
+                    <MenuItem x:Name="MenuHeight" StaysOpenOnClick="True" HorizontalContentAlignment="Stretch">
+                        <MenuItem.Icon>
+                            <iconPacks:PackIconMaterial Kind="ArrowUpDown" Width="14" Height="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </MenuItem.Icon>
                         <MenuItem.Header>
-                            <Grid Width="250">
+                            <Grid MinWidth="250" Margin="0,0,-40,0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="80"/>
+                                    <ColumnDefinition Width="70"/>
                                     <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="45"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Height (px)" VerticalAlignment="Center" Grid.Column="0"/>
-                                <Slider x:Name="HeightSlider" Minimum="50" Maximum="2000" Value="300" Grid.Column="1" ValueChanged="HeightSlider_ValueChanged"/>
+                                <TextBlock Text="Height" VerticalAlignment="Center" Grid.Column="0"/>
+                                <Slider x:Name="HeightSlider" Minimum="50" Maximum="2000" Value="300" Grid.Column="1" VerticalAlignment="Center" ValueChanged="HeightSlider_ValueChanged"/>
+                                <TextBlock x:Name="HeightValue" Text="300px" VerticalAlignment="Center" Grid.Column="2" TextAlignment="Right" Foreground="Gray"/>
                             </Grid>
                         </MenuItem.Header>
                     </MenuItem>
-                    <MenuItem x:Name="MenuOpacity" StaysOpenOnClick="True">
+                    <MenuItem x:Name="MenuOpacity" StaysOpenOnClick="True" HorizontalContentAlignment="Stretch">
+                        <MenuItem.Icon>
+                            <iconPacks:PackIconMaterial Kind="CircleOpacity" Width="14" Height="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </MenuItem.Icon>
                         <MenuItem.Header>
-                            <Grid Width="250">
+                            <Grid MinWidth="250" Margin="0,0,-40,0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="80"/>
+                                    <ColumnDefinition Width="70"/>
                                     <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="45"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Opacity (%)" VerticalAlignment="Center" Grid.Column="0"/>
-                                <Slider x:Name="OpacitySlider" Minimum="10" Maximum="100" Value="100" Grid.Column="1" ValueChanged="OpacitySlider_ValueChanged"/>
+                                <TextBlock Text="Opacity" VerticalAlignment="Center" Grid.Column="0"/>
+                                <Slider x:Name="OpacitySlider" Minimum="10" Maximum="100" Value="100" Grid.Column="1" VerticalAlignment="Center" ValueChanged="OpacitySlider_ValueChanged"/>
+                                <TextBlock x:Name="OpacityValue" Text="100%" VerticalAlignment="Center" Grid.Column="2" TextAlignment="Right" Foreground="Gray"/>
                             </Grid>
                         </MenuItem.Header>
                     </MenuItem>
@@ -94,11 +114,27 @@
                     <MenuItem.Icon>
                         <iconPacks:PackIconMaterial Kind="Sync" Width="16" Height="16"/>
                     </MenuItem.Icon>
-                    <MenuItem Header="Rotate Left" Click="RotateLeft_Click" StaysOpenOnClick="True"/>
-                    <MenuItem Header="Rotate Right" Click="Rotate_Click" StaysOpenOnClick="True"/>
+                    <MenuItem Header="Rotate Left" Click="RotateLeft_Click" StaysOpenOnClick="True">
+                        <MenuItem.Icon>
+                            <iconPacks:PackIconMaterial Kind="RotateLeft" Width="14" Height="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="Rotate Right" Click="Rotate_Click" StaysOpenOnClick="True">
+                        <MenuItem.Icon>
+                            <iconPacks:PackIconMaterial Kind="RotateRight" Width="14" Height="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
                     <Separator/>
-                    <MenuItem Header="Flip Horizontal" Click="FlipH_Click" StaysOpenOnClick="True"/>
-                    <MenuItem Header="Flip Vertical" Click="FlipV_Click" StaysOpenOnClick="True"/>
+                    <MenuItem Header="Flip Horizontal" Click="FlipH_Click" StaysOpenOnClick="True">
+                        <MenuItem.Icon>
+                            <iconPacks:PackIconMaterial Kind="FlipHorizontal" Width="14" Height="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="Flip Vertical" Click="FlipV_Click" StaysOpenOnClick="True">
+                        <MenuItem.Icon>
+                            <iconPacks:PackIconMaterial Kind="FlipVertical" Width="14" Height="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
                 </MenuItem>
                 <Separator/>
                 <MenuItem Header="Reset to Default" Click="Reset_Click" StaysOpenOnClick="True">
