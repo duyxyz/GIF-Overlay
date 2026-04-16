@@ -26,6 +26,7 @@ jobs:
       - name: Publish to Winget
         uses: microsoft/winget-create-action@v2
         with:
+          package-id: duyxyz.GIF-Overlay
           version: ${{ steps.get_version.outputs.version }}
           installer-url: https://github.com/duyxyz/GIF-Overlay/releases/download/v${{ steps.get_version.outputs.version }}/GIF-Overlay-Setup.exe
           token: ${{ secrets.WINGET_TOKEN }}

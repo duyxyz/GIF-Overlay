@@ -1,17 +1,6 @@
-# yaml-language-server: $schema=https://aka.ms/winget-manifest.singleton.1.6.0.schema.json
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.version.1.6.0.schema.json
 PackageIdentifier: duyxyz.GIF-Overlay
 PackageVersion: 1.2.8
-PackageLocale: en-US
-PackageName: GIF-Overlay
-Publisher: duyxyz
-PackageUrl: https://github.com/duyxyz/GIF-Overlay
-License: MIT
-ShortDescription: A high-performance GIF overlay application for Windows.
-Moniker: gifoverlay
-InstallerType: inno
-Installers:
-  - Architecture: x64
-    InstallerUrl: https://github.com/duyxyz/GIF-Overlay/releases/download/v1.2.8/GIF-Overlay-Setup.exe
-    InstallerSha256: daf6d4dbbbab17ec8108011038e6dc605b31ea80e993a9c58b21b274281798e2 # To be updated
-ManifestType: singleton
+DefaultLocale: en-US
+ManifestType: version
 ManifestVersion: 1.6.0
