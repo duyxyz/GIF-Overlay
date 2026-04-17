@@ -14,13 +14,15 @@ ChangesAssociations=yes
 
 ; Make the setup look modern
 WizardStyle=modern
+ArchitecturesAllowed=x64
+ArchitecturesInstallIn64BitMode=x64
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 UninstallDisplayIcon={app}\{#MyAppExeName}
 Compression=lzma2/ultra
 SolidCompression=yes
 OutputDir=dist
-OutputBaseFilename=GIF-Overlay-Setup
+OutputBaseFilename=GIF-Overlay-Setup-x64
 
 ; Minimize UAC requests (install to user folder if possible, otherwise admin)
 PrivilegesRequired=lowest

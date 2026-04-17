@@ -100,7 +100,7 @@ jobs:
         tag_name: ${{ needs.create-tag.outputs.new_tag }}
         files: |
           dist/GIF-Overlay-Portable.zip
-          dist/GIF-Overlay-Setup.exe
+          dist/GIF-Overlay-Setup-x64.exe
         name: Release ${{ needs.create-tag.outputs.new_tag }}
         draft: false
         prerelease: false
