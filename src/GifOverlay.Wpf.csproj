@@ -8,6 +8,11 @@
     <UseWPF>true</UseWPF>
     <ApplicationIcon>assets\app_icon.ico</ApplicationIcon>
     <AssemblyName>GIF-Overlay</AssemblyName>
+    <Version>1.3.5</Version>
+    <FileVersion>1.3.5</FileVersion>
+    <Authors>DuyXYZ</Authors>
+    <Company>DuyXYZ</Company>
+    <Description>Minimalist GIF &amp; Image Viewer</Description>
   </PropertyGroup>
 
   <ItemGroup>

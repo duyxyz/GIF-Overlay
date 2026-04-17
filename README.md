@@ -23,7 +23,14 @@
 ## 🚀 How to Use
 
 ### Installation
-1. Download `GIF-Overlay-Setup.exe` from the Releases section (coming soon).
+
+**1. Via WinGet (Recommended)**
+```bash
+winget install Duyxyz.GIF-Overlay
+```
+
+**2. Manual Download**
+1. Download `GIF-Overlay-Setup.exe` from the [Releases](https://github.com/duyxyz/GIF-Overlay/releases) section.
 2. Run the installer to register the application.
 3. Right-click any `.gif` file -> **Open With** -> Select **GIF Overlay**.
 

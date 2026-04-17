@@ -74,9 +74,17 @@ jobs:
       run: dotnet restore src/GifOverlay.Wpf.csproj
 
     - name: Build and Publish
-      run: dotnet publish src/GifOverlay.Wpf.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -o dist/GIF-Overlay
+      run: dotnet publish src/GifOverlay.Wpf.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:Version=${{ needs.create-tag.outputs.new_tag }} -o dist/GIF-Overlay
 
-    - name: Create Portable Zip
+    - name: Update Version in Setup Script
+      shell: powershell
+      run: |
+        $tag = "${{ needs.create-tag.outputs.new_tag }}".TrimStart('v')
+        $configPath = "setup_script.iss"
+        (Get-Content $configPath) -replace '#define MyAppVersion ".*"', "#define MyAppVersion `"$tag`"" | Set-Content $configPath
+        Write-Host "Updated $configPath to version $tag"
+
+    - name: Portable Zip
       shell: powershell
       run: |
         if (Test-Path "dist/*.zip") { Remove-Item "dist/*.zip" }

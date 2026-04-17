@@ -1,6 +1,6 @@
 ﻿# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
 PackageIdentifier: duyxyz.GIF-Overlay
-PackageVersion: 1.2.8
+PackageVersion: 1.3.5
 PackageLocale: en-US
 PackageName: GIF-Overlay
 PackageUrl: https://github.com/duyxyz/GIF-Overlay
