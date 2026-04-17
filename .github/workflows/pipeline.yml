@@ -102,7 +102,7 @@ jobs:
 
   # 4. Đưa lên Winget (chạy cuối cùng sau khi Release đã sẵn sàng)
   publish-winget:
-    needs: create-release
+    needs: [create-tag, create-release]
     runs-on: ubuntu-latest
     steps:
       - name: Publish to WinGet
@@ -110,4 +110,5 @@ jobs:
         with:
           identifier: duyxyz.GIF-Overlay
           installers-regex: '\.exe$'
+          release-tag: ${{ needs.create-tag.outputs.new_tag }}
           token: ${{ secrets.WINGET_TOKEN }}
