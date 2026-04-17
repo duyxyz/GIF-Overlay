@@ -1,0 +1,46 @@
+name: Release Application
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore src/GifOverlay.Wpf.csproj
+
+    - name: Build and Publish
+      run: dotnet publish src/GifOverlay.Wpf.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -o dist/GIF-Overlay
+
+    - name: Create Portable Zip
+      shell: powershell
+      run: |
+        if (Test-Path "dist/*.zip") { Remove-Item "dist/*.zip" }
+        Compress-Archive -Path "dist/GIF-Overlay/*" -DestinationPath "dist/GIF-Overlay-Portable.zip"
+
+    - name: Compile Setup (Inno Setup)
+      uses: Minionguyjpro/Inno-Setup-Action@v1.2.5
+      with:
+        path: setup_script.iss
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          dist/GIF-Overlay-Portable.zip
+          dist/GIF-Overlay-Setup.exe
+        name: Release ${{ github.ref_name }}
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

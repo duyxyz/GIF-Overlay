@@ -33,10 +33,10 @@ namespace GifOverlay.Wpf
             } 
         }
 
-        public MainWindow(string[] args = null)
+        public MainWindow(string[]? args = null)
         {
-            InitializeComponent();
             _settings = SettingsService.Load();
+            InitializeComponent();
             
             _saveTimer = new System.Windows.Threading.DispatcherTimer();
             _saveTimer.Interval = TimeSpan.FromMilliseconds(500);
