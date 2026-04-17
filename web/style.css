@@ -1,13 +1,17 @@
 :root {
-    --bg-color: #fce7f3;
-    /* Light pink background */
+    --bg-color: #eff6ff;
+    /* Light blue background */
     --card-bg: #ffffff;
     --text-color: #000000;
     --border-color: #000000;
-    --primary-color: #fef08a;
-    /* Yellow */
-    --accent-color: #a7f3d0;
-    /* Mint green */
+    --primary-color: #60a5fa;
+    /* vibrant blue */
+    --accent-color: #93c5fd;
+    /* Sky blue */
+}
+
+html {
+    font-size: clamp(14px, 0.4vw + 10px, 18px);
 }
 
 * {
@@ -72,7 +76,7 @@ body {
 .card {
     background-color: var(--card-bg);
     border: 3px solid var(--border-color);
-    padding: 2.5rem;
+    padding: clamp(1.5rem, 3vw, 2.5rem);
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -98,18 +102,18 @@ body {
 }
 
 .text-card h1 {
-    font-size: min(6vw, 6vh);
+    font-size: clamp(2.5rem, 7vw, 4.5rem);
     line-height: 1.05;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.8rem;
     text-transform: uppercase;
     letter-spacing: -2px;
 }
 
 .text-card p {
-    font-size: min(1.5vw, 2vh);
+    font-size: clamp(1rem, 1.5vw, 1.2rem);
     line-height: 1.5;
     max-width: 80%;
-    margin-bottom: 2.5rem;
+    margin-bottom: 1.8rem;
 }
 
 .action-buttons {
@@ -146,10 +150,11 @@ body {
 }
 
 .winget-container {
-    margin-top: 2rem;
+    margin-top: 1.8rem;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    align-items: flex-start;
 }
 
 .winget-label {
@@ -166,6 +171,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 1.5rem;
     box-shadow: 4px 4px 0px var(--border-color);
     cursor: pointer;
     transition: all 0.1s ease;
@@ -206,13 +212,13 @@ body {
 }
 
 .feature-2 {
-    background-color: #fbcfe8;
+    background-color: #93c5fd;
     grid-column: 2;
     grid-row: 2;
 }
 
 .feature-3 {
-    background-color: #d8b4fe;
+    background-color: #60a5fa;
     grid-column: 3;
     grid-row: 2;
 }
