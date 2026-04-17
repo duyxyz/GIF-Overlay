@@ -26,7 +26,7 @@
 
 **1. Via WinGet (Recommended)**
 ```bash
-winget install Duyxyz.GIF-Overlay
+winget install gifoverlay
 ```
 
 **2. Manual Download**

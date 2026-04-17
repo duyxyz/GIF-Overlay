@@ -27,6 +27,15 @@
                     <a href="https://github.com/duyxyz/GIF-Overlay/blob/main/README.md" class="btn btn-outline"
                         target="_blank">Read Docs</a>
                 </div>
+
+                <div class="winget-container">
+                    <span class="winget-label">Quick Install via WinGet:</span>
+                    <div class="winget-box" onclick="copyToClipboard()">
+                        <code id="winget-command" class="command-text">winget install gifoverlay</code>
+                        <img src="https://api.iconify.design/heroicons:clipboard-document.svg" alt="Copy"
+                            class="copy-icon">
+                    </div>
+                </div>
             </div>
 
             <div class="card feature-card feature-1">
@@ -79,6 +88,18 @@
                 console.error('Error fetching latest release from GitHub API:', error);
                 document.getElementById('version-badge').textContent = 'V1.1.0'; // Fallback
             }
+        }
+
+        function copyToClipboard() {
+            const command = document.getElementById('winget-command').innerText;
+            navigator.clipboard.writeText(command).then(() => {
+                const box = document.querySelector('.winget-box');
+                const originalBg = box.style.backgroundColor;
+                box.style.backgroundColor = 'var(--accent-color)';
+                setTimeout(() => {
+                    box.style.backgroundColor = '#000';
+                }, 200);
+            });
         }
 
         fetchLatestRelease();
