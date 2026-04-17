@@ -1,0 +1,109 @@
+name: CI/CD Pipeline
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  # 1. Kiểm tra build trên mọi trường hợp
+  build-check:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Restore
+        run: dotnet restore src/GifOverlay.Wpf.csproj
+      - name: Build
+        run: dotnet build src/GifOverlay.Wpf.csproj -c Release
+
+  # 2. Tự động tạo Tag (chỉ chạy trên main sau khi build thành công)
+  create-tag:
+    needs: build-check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    outputs:
+      new_tag: ${{ steps.tagging.outputs.new_tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
+      - name: Determine Bump Type
+        id: bump_type
+        shell: bash
+        run: |
+          latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.0.0")
+          patch=$(echo $latest_tag | cut -d. -f3)
+          if [ "$patch" -eq 9 ]; then
+            echo "type=minor" >> $GITHUB_OUTPUT
+          else
+            echo "type=patch" >> $GITHUB_OUTPUT
+          fi
+      - name: Bump version and push tag
+        id: tagging
+        uses: anothrNick/github-tag-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WITH_V: true
+          DEFAULT_BUMP: ${{ steps.bump_type.outputs.type }}
+
+  # 3. Tạo Release (chạy ngay sau khi có Tag mới)
+  create-release:
+    needs: create-tag
+    runs-on: windows-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.create-tag.outputs.new_tag != ''
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore src/GifOverlay.Wpf.csproj
+
+    - name: Build and Publish
+      run: dotnet publish src/GifOverlay.Wpf.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -o dist/GIF-Overlay
+
+    - name: Create Portable Zip
+      shell: powershell
+      run: |
+        if (Test-Path "dist/*.zip") { Remove-Item "dist/*.zip" }
+        Compress-Archive -Path "dist/GIF-Overlay/*" -DestinationPath "dist/GIF-Overlay-Portable.zip"
+
+    - name: Compile Setup (Inno Setup)
+      uses: Minionguyjpro/Inno-Setup-Action@v1.2.5
+      with:
+        path: setup_script.iss
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ needs.create-tag.outputs.new_tag }}
+        files: |
+          dist/GIF-Overlay-Portable.zip
+          dist/GIF-Overlay-Setup.exe
+        name: Release ${{ needs.create-tag.outputs.new_tag }}
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # 4. Đưa lên Winget (chạy cuối cùng sau khi Release đã sẵn sàng)
+  publish-winget:
+    needs: create-release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish to WinGet
+        uses: vedantmgoyal9/winget-releaser@main
+        with:
+          identifier: duyxyz.GIF-Overlay
+          installers-regex: '\.exe$'
+          token: ${{ secrets.WINGET_TOKEN }}
