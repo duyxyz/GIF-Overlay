@@ -6,56 +6,86 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GIF Overlay - Minimalist Viewer</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
 </head>
 
 <body>
     <div class="wrapper">
         <header class="navbar">
-            <div class="logo">GIF_OVERLAY</div>
-            <a href="https://github.com/duyxyz/GIF-Overlay" class="github-link" target="_blank">GITHUB REPO</a>
+            <div class="logo">
+                <img src="https://raw.githubusercontent.com/duyxyz/GIF-Overlay/refs/heads/main/src/assets/app_icon.ico"
+                    alt="GIF Overlay Logo" class="nav-logo-img">
+                <span>GIF Overlay</span>
+            </div>
+            <a href="https://github.com/duyxyz/GIF-Overlay" class="github-link text-16px" target="_blank">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path
+                        d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+                    </path>
+                </svg>
+                <span>Github Repo</span>
+            </a>
         </header>
 
         <main class="grid-layout">
             <div class="card text-card">
-                <div class="badge" id="version-badge">V1.1.0</div>
-                <h1>PIN YOUR MEDIA.<br>STAY FOCUSED.</h1>
-                <p>A purely minimalist, hardware-accelerated GIF and static image viewer for Windows.</p>
+                <div class="badge caption tabular-nums" id="version-badge">V1.1.0</div>
+                <h1 class="heading-1">Pin your media.<br>Stay focused.</h1>
+                <p class="body-text">A purely minimalist, hardware-accelerated GIF and static image viewer for Windows.
+                </p>
                 <div class="action-buttons">
                     <a href="https://github.com/duyxyz/GIF-Overlay/releases" id="download-btn" class="btn btn-primary"
                         target="_blank">Download Setup</a>
-                    <a href="https://github.com/duyxyz/GIF-Overlay/blob/main/README.md" class="btn btn-outline"
+                    <a href="https://github.com/duyxyz/GIF-Overlay/blob/main/README.md" class="btn btn-ghost"
                         target="_blank">Read Docs</a>
                 </div>
 
                 <div class="winget-container">
-                    <span class="winget-label">Quick Install via WinGet:</span>
-                    <div class="winget-box" onclick="copyToClipboard()">
-                        <code id="winget-command" class="command-text">winget install gifoverlay</code>
-                        <img src="https://api.iconify.design/heroicons:clipboard-document.svg" alt="Copy"
-                            class="copy-icon">
+                    <span class="winget-label text-12px">Quick Install via WinGet:</span>
+                    <div class="winget-box">
+                        <code id="winget-command" class="command-text tabular-nums"
+                            style="user-select: all;">winget install gifoverlay</code>
+                        <button class="copy-btn" onclick="copyToClipboard()" aria-label="Copy command">
+                            <svg id="copy-icon" class="copy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                            <svg id="check-icon" class="copy-icon" style="display: none;" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <div class="card feature-card feature-1">
-                <h3>Always on Top</h3>
-                <p>Perfect for drawing references or tracing directly on your screen.</p>
-            </div>
+            <div class="side-cards">
+                <div class="card feature-card">
+                    <h3 class="body-secondary">Always on Top</h3>
+                    <p class="text-15px">Perfect for drawing references or tracing directly on your screen.</p>
+                </div>
 
-            <div class="card feature-card feature-2">
-                <h3>Translucent</h3>
-                <p>Zero window borders. See through the overlay.</p>
-            </div>
+                <div class="card feature-card">
+                    <h3 class="body-secondary">Translucent</h3>
+                    <p class="text-15px">Zero window borders. See through the overlay.</p>
+                </div>
 
-            <div class="card feature-card feature-3">
-                <h3>Dynamic Controls</h3>
-                <p>Scale, rotate, and adjust opacity instantly.</p>
+                <div class="card feature-card">
+                    <h3 class="body-secondary">Dynamic Controls</h3>
+                    <p class="text-15px">Scale, rotate, and adjust opacity instantly.</p>
+                </div>
             </div>
 
             <div class="card visual-card">
-                <div class="image-wrapper">
-                    <img src="Ababa%20Sticker.gif" alt="GIF Overlay" class="demo-image">
+                <div class="gif-gallery">
+                    <img src="Cat%20Luna%20Sticker%20by%20Database數據.gif" alt="Cat Luna" class="gallery-image">
+                    <img src="Cat%20Meme%20Sticker%20by%20Database數據.gif" alt="Cat Meme" class="gallery-image">
+                    <img src="Cat%20Vibing%20Sticker.gif" alt="Cat Vibing" class="gallery-image">
                 </div>
             </div>
         </main>
@@ -68,14 +98,11 @@
                 if (response.ok) {
                     const data = await response.json();
 
-                    // Cập nhật version badge
                     const versionBadge = document.getElementById('version-badge');
                     if (versionBadge && data.tag_name) {
-                        // Viết hoa toàn bộ tag name, ví dụ 'v1.1.0' -> 'V1.1.0'
                         versionBadge.textContent = data.tag_name.toUpperCase();
                     }
 
-                    // Cập nhật link tải xuống (ưu tiên file .exe cài đặt, nếu không lấy file đầu tiên)
                     const downloadBtn = document.getElementById('download-btn');
                     if (downloadBtn && data.assets && data.assets.length > 0) {
                         const setupAsset = data.assets.find(a => a.name.endsWith('.exe')) || data.assets[0];
@@ -85,20 +112,29 @@
                     document.getElementById('version-badge').textContent = 'V1.1.0';
                 }
             } catch (error) {
-                console.error('Error fetching latest release from GitHub API:', error);
-                document.getElementById('version-badge').textContent = 'V1.1.0'; // Fallback
+                console.error('Error fetching latest release:', error);
+                document.getElementById('version-badge').textContent = 'V1.1.0';
             }
         }
+
+
 
         function copyToClipboard() {
             const command = document.getElementById('winget-command').innerText;
             navigator.clipboard.writeText(command).then(() => {
-                const box = document.querySelector('.winget-box');
-                const originalBg = box.style.backgroundColor;
-                box.style.backgroundColor = 'var(--accent-color)';
+                const btn = document.querySelector('.copy-btn');
+                const copyIcon = document.getElementById('copy-icon');
+                const checkIcon = document.getElementById('check-icon');
+
+                copyIcon.style.display = 'none';
+                checkIcon.style.display = 'block';
+                checkIcon.style.color = 'var(--accent)';
+
                 setTimeout(() => {
-                    box.style.backgroundColor = '#000';
-                }, 200);
+                    copyIcon.style.display = 'block';
+                    checkIcon.style.display = 'none';
+                    copyIcon.style.color = 'currentColor';
+                }, 1000);
             });
         }
 

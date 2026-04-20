@@ -1,279 +1,386 @@
 :root {
-    --bg-color: #eff6ff;
-    /* Light blue background */
-    --card-bg: #ffffff;
-    --text-color: #000000;
-    --border-color: #000000;
-    --primary-color: #60a5fa;
-    /* vibrant blue */
-    --accent-color: #93c5fd;
-    /* Sky blue */
-}
-
-html {
-    font-size: clamp(14px, 0.4vw + 10px, 18px);
+    --surface-base: #FFFFFF;
+    --surface-raised: #0858DC;
+    --text-primary: #808080;
+    --text-secondary: #6D89B5;
+    --text-tertiary: #90C5F1;
+    --border-default: #B5C7D8;
+    --accent: #155BD0;
 }
 
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: 'Space Grotesk', sans-serif;
 }
 
 body {
-    background-color: var(--bg-color);
-    color: var(--text-color);
+    background-color: var(--surface-base);
+    font-family: 'Inter', sans-serif;
     width: 100vw;
-    height: 100vh;
+    height: 100dvh;
     overflow: hidden;
     display: flex;
     justify-content: center;
     align-items: center;
+    -webkit-font-smoothing: antialiased;
 }
 
+/* Typography Rules */
+.heading-1 {
+    font-size: 51px;
+    font-weight: 700;
+    color: #2D2B30;
+    text-wrap: balance;
+}
+
+.text-43px {
+    font-size: 43px;
+    font-weight: 700;
+    color: #272729;
+    text-wrap: balance;
+}
+
+.body-text {
+    font-size: 27px;
+    font-weight: 500;
+    color: #454547;
+    text-wrap: pretty;
+}
+
+.body-secondary {
+    font-size: 26px;
+    font-weight: 500;
+    color: #3D3C41;
+    text-wrap: balance;
+}
+
+.text-16px {
+    font-size: 16px;
+    font-weight: 400;
+    color: #6D89B5;
+}
+
+.text-15px {
+    font-size: 15px;
+    font-weight: 400;
+    color: #808080;
+    /* the guide says #8EC7F2, but text needs contrast. Will stick to the guide's #8EC7F2 or use text-primary */
+}
+
+.text-12px {
+    font-size: 12px;
+    font-weight: 300;
+    color: #808080;
+}
+
+.caption {
+    font-size: 11px;
+    font-weight: 300;
+    color: #707070;
+}
+
+.tabular-nums {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Interaction States */
+a:focus-visible,
+button:focus-visible,
+.winget-box:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* Layout */
 .wrapper {
     width: 100%;
+    max-width: 1920px;
     height: 100%;
     display: flex;
     flex-direction: column;
-    padding: min(2vw, 2rem);
+    padding: 34px;
+    gap: 13px;
 }
 
 .navbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 1.5rem;
-    background-color: var(--primary-color);
-    border: 3px solid var(--border-color);
-    margin-bottom: min(2vw, 2rem);
+    height: 43px;
+    padding: 0 13px;
 }
 
 .logo {
-    font-size: 1.5rem;
+    color: #272729;
+    font-size: 26px;
     font-weight: 700;
-    letter-spacing: -1px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .github-link {
     text-decoration: none;
-    color: var(--text-color);
-    font-weight: 700;
-    border-bottom: 2px solid var(--border-color);
+    transition: opacity 200ms ease-out;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #272729;
+}
+
+.github-link:hover {
+    opacity: 0.8;
+}
+
+.nav-icon {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2.5px;
+}
+
+.nav-logo-img {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
 }
 
 .grid-layout {
     display: grid;
     flex: 1;
-    grid-template-columns: 1fr 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    gap: min(2vw, 2rem);
-    height: calc(100% - 100px);
-    /* Fill remaining space safely */
+    grid-template-columns: 2fr 1fr 2fr;
+    gap: 13px;
+    height: calc(100% - 56px);
+    /* safe calculation */
 }
 
+/* Cards */
 .card {
-    background-color: var(--card-bg);
-    border: 3px solid var(--border-color);
-    padding: clamp(1.5rem, 3vw, 2.5rem);
+    background-color: var(--surface-base);
+    border: 1px solid var(--border-default);
+    border-radius: 21px;
+    padding: 34px;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    position: relative;
 }
 
 .text-card {
-    grid-column: 1 / 3;
-    grid-row: 1 / 2;
-    background-color: var(--card-bg);
-    position: relative;
-    overflow: hidden;
+    grid-column: 1 / 2;
+    justify-content: center;
 }
 
 .badge {
     position: absolute;
-    top: 1.5rem;
-    right: 1.5rem;
-    background-color: var(--primary-color);
-    border: 2px solid var(--border-color);
-    padding: 0.5rem 1rem;
-    font-weight: 700;
-    font-size: 0.9rem;
-}
-
-.text-card h1 {
-    font-size: clamp(2.5rem, 7vw, 4.5rem);
-    line-height: 1.05;
-    margin-bottom: 1.8rem;
+    top: 34px;
+    right: 34px;
+    color: #808080;
+    border: 1px solid var(--border-default);
+    border-radius: 21px;
+    padding: 4px 13px;
     text-transform: uppercase;
-    letter-spacing: -2px;
+    letter-spacing: 0.02em;
 }
 
-.text-card p {
-    font-size: clamp(1rem, 1.5vw, 1.2rem);
-    line-height: 1.5;
-    max-width: 80%;
-    margin-bottom: 1.8rem;
+.text-card .heading-1 {
+    margin-bottom: 34px;
 }
 
+.text-card .body-text {
+    margin-bottom: 34px;
+    max-width: 90%;
+}
+
+/* Buttons */
 .action-buttons {
     display: flex;
-    gap: 1rem;
+    gap: 13px;
+    margin-bottom: 34px;
 }
 
 .btn {
-    padding: 1rem 2rem;
-    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 13px 34px;
     text-decoration: none;
-    text-transform: uppercase;
-    border: 3px solid var(--border-color);
-    color: var(--text-color);
-    transition: all 0.15s ease;
+    border-radius: 21px;
+    transition: background-color 200ms ease-out;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    font-weight: 400;
 }
 
 .btn-primary {
-    background-color: var(--accent-color);
+    background-color: var(--accent);
+    color: var(--surface-base);
+    border: none;
 }
 
-.btn-outline {
+.btn-primary:hover {
+    background-color: #3174e2;
+    /* Lighten by 10% */
+}
+
+.btn-ghost {
     background-color: transparent;
+    color: #6D89B5;
+    border: none;
 }
 
-.btn:hover {
-    transform: translate(-2px, -2px);
-    box-shadow: 4px 4px 0px var(--border-color);
+.btn-ghost:hover {
+    background-color: #F5F7FA;
 }
 
-.btn:active {
-    transform: translate(0, 0);
-    box-shadow: 0px 0px 0px var(--border-color);
-}
-
+/* WinGet Box */
 .winget-container {
-    margin-top: 1.8rem;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    align-items: flex-start;
+    gap: 4px;
 }
 
 .winget-label {
-    font-size: 0.8rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: var(--text-color);
+    margin-bottom: 2px;
 }
 
 .winget-box {
-    background-color: #000;
-    border: 3px solid var(--border-color);
-    padding: 0.75rem 1.25rem;
+    background-color: var(--surface-base);
+    border: 1px solid var(--border-default);
+    border-radius: 21px;
+    padding: 8px 13px 8px 21px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 1.5rem;
-    box-shadow: 4px 4px 0px var(--border-color);
-    cursor: pointer;
-    transition: all 0.1s ease;
-}
-
-.winget-box:hover {
-    transform: translate(-2px, -2px);
-    box-shadow: 6px 6px 0px var(--border-color);
-}
-
-.winget-box:active {
-    transform: translate(0, 0);
-    box-shadow: 2px 2px 0px var(--border-color);
 }
 
 .command-text {
-    font-family: 'Courier New', Courier, monospace;
-    color: #fff;
-    font-size: 1rem;
-    user-select: all;
+    font-size: 15px;
+    font-weight: 400;
+    color: #454547;
+}
+
+.copy-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #808080;
+    transition: background-color 200ms ease-out, color 200ms ease-out;
+}
+
+.copy-btn:hover {
+    background-color: #F8FAFC;
+    color: var(--accent);
+}
+
+.copy-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
 }
 
 .copy-icon {
-    width: 20px;
-    height: 20px;
-    filter: invert(1);
+    width: 16px;
+    height: 16px;
+}
+
+/* Features */
+.side-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+    grid-column: 2 / 3;
 }
 
 .feature-card {
-    text-align: center;
-    align-items: center;
+    flex: 1;
+    justify-content: center;
+    padding: 21px 34px;
+    transition: background-color 200ms ease-out;
 }
 
-.feature-1 {
-    background-color: #bfdbfe;
-    grid-column: 1;
-    grid-row: 2;
+.feature-card:hover {
+    background-color: #F8FAFC;
 }
 
-.feature-2 {
-    background-color: #93c5fd;
-    grid-column: 2;
-    grid-row: 2;
+.feature-card .body-secondary {
+    margin-bottom: 13px;
 }
 
-.feature-3 {
-    background-color: #60a5fa;
-    grid-column: 3;
-    grid-row: 2;
+.feature-card p {
+    color: #454547;
+    /* Use body-text color instead of #8EC7F2 for contrast */
 }
 
-/* Soft purple */
-
-.feature-card h3 {
-    font-size: 1.5rem;
-    margin-bottom: 0.5rem;
-    text-transform: uppercase;
-}
-
+/* Visual Card */
 .visual-card {
-    grid-column: 3;
-    grid-row: 1;
-    background-color: var(--primary-color);
-    align-items: center;
-    padding: 1rem;
+    grid-column: 3 / 4;
+    padding: 13px;
 }
 
-.image-wrapper {
+.gif-gallery {
     width: 100%;
     height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: var(--card-bg);
-    border: 3px solid var(--border-color);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 13px;
+    padding: 4px;
 }
 
-.demo-image {
-    max-width: 80%;
-    max-height: 80%;
+/* Make the first GIF span 2 rows to fill a 2x2 grid nicely with 3 items */
+.gallery-image:first-child {
+    grid-row: span 2;
+}
+
+.gallery-image {
+    width: 100%;
+    height: 100%;
+    border-radius: 13px;
     object-fit: contain;
+    background-color: #FAFCFF;
+    border: 1px solid #F0F4F8;
+    padding: 4px;
+    min-height: 0;
+    /* Important for grid items to shrink */
 }
 
-/* Responsive check for smaller screens while keeping no robust scroll */
+/* Responsive constraints */
+@media (max-width: 1200px) {
+    .grid-layout {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .visual-card {
+        display: none;
+    }
+}
+
 @media (max-width: 900px) {
     .grid-layout {
         grid-template-columns: 1fr;
-        grid-template-rows: auto;
+        height: auto;
+        overflow-y: auto;
+        padding-bottom: 34px;
+    }
+
+    body {
+        overflow-y: auto;
+    }
+
+    .side-cards {
+        grid-column: 1 / 2;
     }
 
     .text-card {
-        grid-column: 1;
-        grid-row: 1;
+        padding: 21px;
     }
 
-    .feature-card,
-    .visual-card {
-        display: none;
-        /* Hide to prevent scroll */
-    }
-
-    .text-card h1 {
-        font-size: 8vw;
+    .text-card .heading-1 {
+        font-size: 43px;
     }
 }
