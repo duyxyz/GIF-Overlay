@@ -1,11 +1,7 @@
 name: CI/CD Pipeline
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+  workflow_dispatch:
+
 
 jobs:
   # 1. Kiểm tra build trên mọi trường hợp
@@ -28,7 +24,7 @@ jobs:
   create-tag:
     needs: build-check
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     outputs:
       new_tag: ${{ steps.tagging.outputs.new_tag }}
     steps:
@@ -58,7 +54,7 @@ jobs:
   create-release:
     needs: create-tag
     runs-on: windows-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.create-tag.outputs.new_tag != ''
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && needs.create-tag.outputs.new_tag != ''
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
