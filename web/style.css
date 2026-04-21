@@ -361,15 +361,21 @@ button:focus-visible,
 }
 
 @media (max-width: 900px) {
+    body {
+        overflow-y: auto;
+        height: auto;
+        min-height: 100dvh;
+    }
+
+    .wrapper {
+        height: auto;
+        padding: 24px;
+    }
+
     .grid-layout {
         grid-template-columns: 1fr;
         height: auto;
-        overflow-y: auto;
         padding-bottom: 34px;
-    }
-
-    body {
-        overflow-y: auto;
     }
 
     .side-cards {
@@ -377,10 +383,80 @@ button:focus-visible,
     }
 
     .text-card {
-        padding: 21px;
+        padding: 24px;
+    }
+
+    .badge {
+        top: 24px;
+        right: 24px;
     }
 
     .text-card .heading-1 {
         font-size: 43px;
+        margin-top: 34px;
+    }
+}
+
+@media (max-width: 600px) {
+    .wrapper {
+        padding: 16px;
+    }
+
+    .navbar {
+        padding: 0 4px;
+    }
+
+    .github-link span {
+        display: none;
+    }
+
+    .text-card {
+        padding: 20px;
+    }
+
+    .badge {
+        position: relative;
+        top: auto;
+        right: auto;
+        align-self: flex-start;
+        margin-bottom: 16px;
+        display: inline-block;
+    }
+
+    .text-card .heading-1 {
+        font-size: 36px;
+        margin-top: 0;
+        margin-bottom: 20px;
+        line-height: 1.2;
+    }
+
+    .text-card .body-text {
+        font-size: 20px;
+        margin-bottom: 24px;
+        max-width: 100%;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+
+    .btn {
+        width: 100%;
+        padding: 14px 24px;
+    }
+
+    .winget-box {
+        padding: 8px 12px;
+    }
+
+    .command-text {
+        font-size: 13px;
+        word-break: break-all;
+    }
+
+    .feature-card {
+        padding: 20px;
     }
 }
