@@ -422,6 +422,45 @@ h1, h2, h3, h4 {
     background: var(--primary-active);
 }
 
+.sticker-thumbnails {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-xxs);
+}
+
+.thumb-btn {
+    flex: 1;
+    height: 60px;
+    border: 1px solid var(--hairline-strong);
+    background: var(--canvas-soft);
+    border-radius: 8px;
+    padding: var(--spacing-xxs);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    transition: var(--transition-editorial);
+}
+
+.thumb-btn img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 4px;
+}
+
+.thumb-btn:hover {
+    border-color: var(--primary);
+    background: var(--surface-card);
+}
+
+.thumb-btn.active {
+    border-color: var(--primary);
+    background: var(--surface-card);
+    box-shadow: 0 0 0 2px rgba(0, 102, 245, 0.15);
+}
+
 /* Section Styling */
 .section {
     padding: var(--spacing-section) 0;

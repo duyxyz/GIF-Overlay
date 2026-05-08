@@ -182,11 +182,7 @@ ScaleTransform.ScaleY *= factor;
             </div>
         </section>
 
-        <!-- Pre-footer CTA Band -->
-        <section class="cta-band">
-            <h2 class="display-lg">Experience borderless reference pinning</h2>
-            <a href="https://github.com/duyxyz/GIF-Overlay/releases" class="btn-primary" id="cta-download-btn" target="_blank">Download Setup</a>
-        </section>
+
     </main>
 
     <!-- Footer -->
@@ -265,12 +261,10 @@ ScaleTransform.ScaleY *= factor;
 
                     const downloadBtn = document.getElementById('download-btn');
                     const navDownloadBtn = document.getElementById('nav-download-btn');
-                    const ctaDownloadBtn = document.getElementById('cta-download-btn');
                     if (data.assets && data.assets.length > 0) {
                         const setupAsset = data.assets.find(a => a.name.endsWith('.exe')) || data.assets[0];
                         if (downloadBtn) downloadBtn.href = setupAsset.browser_download_url;
                         if (navDownloadBtn) navDownloadBtn.href = setupAsset.browser_download_url;
-                        if (ctaDownloadBtn) ctaDownloadBtn.href = setupAsset.browser_download_url;
                     }
                 } else {
                     document.getElementById('version-badge').textContent = 'V1.1.0';
