@@ -4,94 +4,254 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GIF Overlay - Minimalist Viewer</title>
+    <meta name="description" content="GIF Overlay is a quietly-confident, minimalist, and hardware-accelerated GIF and static image viewer for Windows. Pin your media, adjust opacity, and stay focused.">
+    <title>GIF Overlay — Minimalist GIF & Image Viewer</title>
+    <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/duyxyz/GIF-Overlay/refs/heads/main/src/assets/app_icon.ico">
     <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
 </head>
 
 <body>
-    <div class="wrapper">
-        <header class="navbar">
-            <div class="logo">
+    <!-- Top Navigation -->
+    <nav class="top-nav">
+        <div class="container top-nav-inner">
+            <a href="#" class="wordmark">
                 <img src="https://raw.githubusercontent.com/duyxyz/GIF-Overlay/refs/heads/main/src/assets/app_icon.ico"
-                    alt="GIF Overlay Logo" class="nav-logo-img">
-                <span>GIF Overlay</span>
-            </div>
-            <a href="https://github.com/duyxyz/GIF-Overlay" class="github-link text-16px" target="_blank">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path
-                        d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
-                    </path>
-                </svg>
-                <span>Github Repo</span>
+                    alt="GIF Overlay Logo" class="wordmark-logo">
+                <span>GIF Overlay<span class="wordmark-accent">.</span></span>
             </a>
-        </header>
+            <ul class="nav-links">
+                <li><a href="#features" class="nav-link">Features</a></li>
+                <li><a href="#controls" class="nav-link">Controls</a></li>
+                <li><a href="https://github.com/duyxyz/GIF-Overlay/blob/main/README.md" class="nav-link" target="_blank">Docs</a></li>
+            </ul>
+            <div class="nav-actions">
+                <a href="https://github.com/duyxyz/GIF-Overlay/releases" id="nav-download-btn" class="btn-primary" target="_blank">Download</a>
+            </div>
+        </div>
+    </nav>
 
-        <main class="grid-layout">
-            <div class="card text-card">
-                <div class="badge caption tabular-nums" id="version-badge">V1.1.0</div>
-                <h1 class="heading-1">Pin your media.<br>Stay focused.</h1>
-                <p class="body-text">A purely minimalist, hardware-accelerated GIF and static image viewer for Windows.
-                </p>
-                <div class="action-buttons">
-                    <a href="https://github.com/duyxyz/GIF-Overlay/releases" id="download-btn" class="btn btn-primary"
-                        target="_blank">Download Setup</a>
-                    <a href="https://github.com/duyxyz/GIF-Overlay/blob/main/README.md" class="btn btn-ghost"
-                        target="_blank">Read Docs</a>
+    <!-- Main Container -->
+    <main class="container">
+        <!-- Hero Section -->
+        <section class="hero-split">
+            <div class="hero-content">
+                <div class="winget-inline" style="margin-bottom: var(--spacing-md);">
+                    <span class="winget-label" id="version-badge">V1.1.0</span>
+                </div>
+                <h1 class="display-mega">Pin your media.<br><span class="wordmark-accent">Stay focused.</span></h1>
+                <p class="hero-subhead">A minimalist, hardware-accelerated GIF and static image viewer for Windows. Pin reference images or cute stickers anywhere on your screen with adjustable translucent backgrounds.</p>
+                
+                <div class="hero-ctas">
+                    <a href="https://github.com/duyxyz/GIF-Overlay/releases" id="download-btn" class="btn-download" target="_blank">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        Download for Windows
+                    </a>
+                    <a href="https://github.com/duyxyz/GIF-Overlay/blob/main/README.md" class="btn-tertiary-text" target="_blank">
+                        Read Docs <span>&rarr;</span>
+                    </a>
                 </div>
 
-                <div class="winget-container">
-                    <span class="winget-label text-12px">Quick Install via WinGet:</span>
-                    <div class="winget-box">
-                        <code id="winget-command" class="command-text tabular-nums"
-                            style="user-select: all;">winget install gifoverlay</code>
-                        <button class="copy-btn" onclick="copyToClipboard()" aria-label="Copy command">
-                            <svg id="copy-icon" class="copy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                            </svg>
-                            <svg id="check-icon" class="copy-icon" style="display: none;" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <polyline points="20 6 9 17 4 12"></polyline>
-                            </svg>
-                        </button>
+                <div class="winget-inline">
+                    <span class="winget-label">WinGet</span>
+                    <code class="winget-code" id="winget-command">winget install gifoverlay</code>
+                    <button class="copy-btn" onclick="copyToClipboard()" aria-label="Copy installation command">
+                        <svg id="copy-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        <svg id="check-icon" style="display: none;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Interactive Sandbox Mockup -->
+            <div class="sandbox-container">
+                <div class="desktop-canvas">
+                    <div class="desktop-bg-code">using System.Windows;
+using System.Windows.Media;
+
+namespace GifOverlay
+{
+    public partial class MainWindow : Window
+    {
+        public MainWindow()
+        {
+            InitializeComponent();
+            this.Topmost = true;
+            this.AllowsTransparency = true;
+        }
+    }
+}</div>
+                    <div class="floating-overlay-mock" id="mock-overlay">
+                        <img src="Cat%20Vibing%20Sticker.gif" alt="Cat Vibing" class="floating-gif">
+                    </div>
+                </div>
+                <div class="sandbox-controls">
+                    <div class="control-slider-group">
+                        <div class="slider-header">
+                            <span>Adjust Opacity (Transparency)</span>
+                            <span id="opacity-val">80%</span>
+                        </div>
+                        <input type="range" id="opacity-slider" class="sandbox-slider" min="10" max="100" value="80">
+                    </div>
+                    <div class="control-slider-group">
+                        <div class="slider-header">
+                            <span>Adjust Window Scale</span>
+                            <span id="scale-val">1.0x</span>
+                        </div>
+                        <input type="range" id="scale-slider" class="sandbox-slider" min="50" max="150" value="100">
                     </div>
                 </div>
             </div>
+        </section>
 
-            <div class="side-cards">
-                <div class="card feature-card">
-                    <h3 class="body-secondary">Always on Top</h3>
-                    <p class="text-15px">Perfect for drawing references or tracing directly on your screen.</p>
+        <!-- Features Section -->
+        <section class="section" id="features">
+            <div class="section-head">
+                <span class="section-tag">Features</span>
+                <h2 class="display-lg">Quietly-confident feature architecture</h2>
+            </div>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <span class="section-tag">ENGINE</span>
+                    <h3 class="display-sm">Always on Top</h3>
+                    <p class="feature-desc">Perfect for drawing references, tracing templates, or keeping important guidelines permanently visible above other workspaces.</p>
+                    <div class="code-block">
+this.Topmost = true;
+                    </div>
                 </div>
 
-                <div class="card feature-card">
-                    <h3 class="body-secondary">Translucent</h3>
-                    <p class="text-15px">Zero window borders. See through the overlay.</p>
+                <div class="feature-card">
+                    <span class="section-tag">SURFACE</span>
+                    <h3 class="display-sm">Translucent</h3>
+                    <p class="feature-desc">Enjoy zero window borders and transparent window backdrops. Slide to adjust transparency to match your focus environment.</p>
+                    <div class="code-block">
+AllowsTransparency = "True"
+Background = "Transparent"
+                    </div>
                 </div>
 
-                <div class="card feature-card">
-                    <h3 class="body-secondary">Dynamic Controls</h3>
-                    <p class="text-15px">Scale, rotate, and adjust opacity instantly.</p>
+                <div class="feature-card">
+                    <span class="section-tag">GESTURE</span>
+                    <h3 class="display-sm">Dynamic Scale</h3>
+                    <p class="feature-desc">Adjust scales instantly via Ctrl + Mouse Wheel, rotate, flip, or lock windows instantly via context menus.</p>
+                    <div class="code-block">
+ScaleTransform.ScaleX *= factor;
+ScaleTransform.ScaleY *= factor;
+                    </div>
                 </div>
             </div>
+        </section>
 
-            <div class="card visual-card">
-                <div class="gif-gallery">
-                    <img src="Cat%20Luna%20Sticker%20by%20Database數據.gif" alt="Cat Luna" class="gallery-image">
-                    <img src="Cat%20Meme%20Sticker%20by%20Database數據.gif" alt="Cat Meme" class="gallery-image">
-                    <img src="Cat%20Vibing%20Sticker.gif" alt="Cat Vibing" class="gallery-image">
+        <!-- Controls Section -->
+        <section class="section" id="controls">
+            <div class="controls-split">
+                <div>
+                    <span class="section-tag">Keyboard & Mouse</span>
+                    <h2 class="display-lg">A developer-first gesture dialect</h2>
+                    <p class="hero-subhead" style="margin-top: var(--spacing-base); font-size: 16px;">GIF Overlay integrates into Windows without keyboard friction. Simple hand shapes and key binds trigger fluid sizing transforms.</p>
+                </div>
+                <div class="controls-list">
+                    <div class="control-row">
+                        <span class="control-label">Move overlay</span>
+                        <div class="control-keys">
+                            <kbd>Left Click + Drag</kbd>
+                        </div>
+                    </div>
+                    <div class="control-row">
+                        <span class="control-label">Scale resize</span>
+                        <div class="control-keys">
+                            <kbd>Ctrl</kbd>
+                            <span>+</span>
+                            <kbd>Mouse Wheel</kbd>
+                        </div>
+                    </div>
+                    <div class="control-row">
+                        <span class="control-label">Toggle settings</span>
+                        <div class="control-keys">
+                            <kbd>Right Click</kbd>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </main>
-    </div>
+        </section>
+
+        <!-- Pre-footer CTA Band -->
+        <section class="cta-band">
+            <h2 class="display-lg">Experience borderless reference pinning</h2>
+            <a href="https://github.com/duyxyz/GIF-Overlay/releases" class="btn-primary" id="cta-download-btn" target="_blank">Download Setup</a>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container footer-inner">
+            <div class="footer-brand">
+                <a href="#" class="wordmark">
+                    <img src="https://raw.githubusercontent.com/duyxyz/GIF-Overlay/refs/heads/main/src/assets/app_icon.ico"
+                        alt="GIF Overlay Logo" class="wordmark-logo">
+                    <span>GIF Overlay<span class="wordmark-accent">.</span></span>
+                </a>
+                <p class="footer-brand-text">A minimalist developer product. Licensed under MIT.</p>
+            </div>
+            <div class="footer-col">
+                <span class="footer-col-title">Product</span>
+                <ul class="footer-links">
+                    <li><a href="#features" class="footer-link">Features</a></li>
+                    <li><a href="#controls" class="footer-link">Controls</a></li>
+                    <li><a href="https://github.com/duyxyz/GIF-Overlay/releases" class="footer-link" target="_blank">Download</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <span class="footer-col-title">Resources</span>
+                <ul class="footer-links">
+                    <li><a href="https://github.com/duyxyz/GIF-Overlay/blob/main/README.md" class="footer-link" target="_blank">Documentation</a></li>
+                    <li><a href="https://github.com/duyxyz/GIF-Overlay" class="footer-link" target="_blank">Source Code</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <span class="footer-col-title">Community</span>
+                <ul class="footer-links">
+                    <li><a href="https://github.com/duyxyz/GIF-Overlay/issues" class="footer-link" target="_blank">Issues</a></li>
+                    <li><a href="https://github.com/duyxyz/GIF-Overlay/pulls" class="footer-link" target="_blank">Pull Requests</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <span class="footer-col-title">Developer</span>
+                <ul class="footer-links">
+                    <li><a href="https://github.com/duyxyz" class="footer-link" target="_blank">@duyxyz</a></li>
+                </ul>
+            </div>
+        </div>
+    </footer>
 
     <script>
+        // Interactive Sandbox State Logic
+        const mockOverlay = document.getElementById('mock-overlay');
+        const opacitySlider = document.getElementById('opacity-slider');
+        const opacityVal = document.getElementById('opacity-val');
+        const scaleSlider = document.getElementById('scale-slider');
+        const scaleVal = document.getElementById('scale-val');
+
+        opacitySlider.addEventListener('input', (e) => {
+            const val = e.target.value;
+            opacityVal.textContent = `${val}%`;
+            mockOverlay.style.opacity = val / 100;
+        });
+
+        scaleSlider.addEventListener('input', (e) => {
+            const val = e.target.value;
+            scaleVal.textContent = `${(val / 100).toFixed(1)}x`;
+            mockOverlay.style.transform = `scale(${val / 100})`;
+        });
+
+        // GitHub Release fetch
         async function fetchLatestRelease() {
             try {
                 const response = await fetch('https://api.github.com/repos/duyxyz/GIF-Overlay/releases/latest');
@@ -104,9 +264,13 @@
                     }
 
                     const downloadBtn = document.getElementById('download-btn');
-                    if (downloadBtn && data.assets && data.assets.length > 0) {
+                    const navDownloadBtn = document.getElementById('nav-download-btn');
+                    const ctaDownloadBtn = document.getElementById('cta-download-btn');
+                    if (data.assets && data.assets.length > 0) {
                         const setupAsset = data.assets.find(a => a.name.endsWith('.exe')) || data.assets[0];
-                        downloadBtn.href = setupAsset.browser_download_url;
+                        if (downloadBtn) downloadBtn.href = setupAsset.browser_download_url;
+                        if (navDownloadBtn) navDownloadBtn.href = setupAsset.browser_download_url;
+                        if (ctaDownloadBtn) ctaDownloadBtn.href = setupAsset.browser_download_url;
                     }
                 } else {
                     document.getElementById('version-badge').textContent = 'V1.1.0';
@@ -117,24 +281,19 @@
             }
         }
 
-
-
         function copyToClipboard() {
             const command = document.getElementById('winget-command').innerText;
             navigator.clipboard.writeText(command).then(() => {
-                const btn = document.querySelector('.copy-btn');
                 const copyIcon = document.getElementById('copy-icon');
                 const checkIcon = document.getElementById('check-icon');
 
                 copyIcon.style.display = 'none';
                 checkIcon.style.display = 'block';
-                checkIcon.style.color = 'var(--accent)';
 
                 setTimeout(() => {
                     copyIcon.style.display = 'block';
                     checkIcon.style.display = 'none';
-                    copyIcon.style.color = 'currentColor';
-                }, 1000);
+                }, 1500);
             });
         }
 
