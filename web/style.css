@@ -486,8 +486,78 @@ h1, h2, h3 {
     }
     .hero-btns {
         justify-content: center;
+        flex-wrap: wrap;
     }
     .mockup-platform {
         margin: 0 auto;
+    }
+}
+
+/* INTENSE SMARTPHONE MOBILE OPTIMIZATIONS */
+/* INTENSE SMARTPHONE MOBILE OPTIMIZATIONS - ONLY GIF REMAINS */
+@media (max-width: 540px) {
+    /* Hide ALL texts, info, buttons and lists */
+    .info-stack {
+        display: none !important;
+    }
+    
+    /* Lock viewport back to 100vh centered for the single gif presentation */
+    body {
+        overflow: hidden !important;
+        height: 100% !important;
+    }
+    .viewport-main {
+        height: 100vh !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+    .center-layout {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        height: 100% !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    /* Eradicate all UI containers surrounding the GIF */
+    .mockup-platform, .os-window {
+        background: none !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        height: auto !important;
+    }
+    
+    .os-toolbar, .os-editor-bg, .mockup-controls {
+        display: none !important;
+    }
+    
+    /* Center and maximize the majestic floating sticker */
+    .app-overlay-float {
+        width: 200px !important;
+        height: 200px !important;
+        background: none !important;
+        border: none !important;
+        box-shadow: none !important;
+        margin: 0 auto !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    .overlay-media {
+        width: 100% !important;
+        height: 100% !important;
+        transform: scale(1.5) !important; /* Render sticker dynamically larger on screen */
     }
 }
